@@ -1,0 +1,273 @@
+# ==========================================================
+# AI DUTCHING SYSTEM - CONFIGURATION
+# ==========================================================
+
+# ==========================================================
+# API SETTINGS
+# ==========================================================
+api:
+  # Sportmonks API Token (REQUIRED)
+  # Get from: https://www.sportmonks.com/
+  sportmonks_token: "YOUR_API_TOKEN_HERE"
+
+  # Rate Limiting
+  max_requests_per_minute: 100
+  request_delay_seconds: 0.3
+
+
+# ==========================================================
+# BANKROLL & MONEY MANAGEMENT
+# ==========================================================
+bankroll:
+  # Initial Bankroll (€)
+  initial: 1000.0
+
+  # Kelly Criterion
+  kelly_cap: 0.25  # Max 25% of bankroll
+  adaptive_kelly: true  # Use adaptive Kelly based on drawdown
+
+  # Stake Limits
+  max_stake_percent: 0.10  # Max 10% per bet
+  min_stake: 5.0  # Minimum stake (€)
+
+  # Risk Management
+  stop_loss_percent: 0.50  # Stop at 50% loss
+  take_profit_percent: 3.0  # Take profit at 300%
+
+
+# ==========================================================
+# BETTING PARAMETERS
+# ==========================================================
+betting:
+  # Odds Range
+  min_odds: 1.10
+  max_odds: 100.0
+
+  # Value Betting
+  min_edge: -0.05  # Minimum Expected Value
+  confidence_threshold: 0.60  # Minimum confidence
+
+  # Markets
+  enabled_markets:
+    - "3Way Result"
+    - "Over/Under 2.5"
+    - "Both Teams Score"
+    - "Correct Score"  # Higher variance!
+
+
+# ==========================================================
+# LEAGUES
+# ==========================================================
+leagues:
+  # Sportmonks League IDs
+  enabled:
+    - 8      # Premier League
+    - 82     # Bundesliga
+    - 564    # La Liga
+    - 384    # Serie A
+    - 301    # Ligue 1
+    - 72     # Eredivisie
+    - 271    # Primeira Liga
+    - 2      # Championship
+
+  # League-specific settings
+  weights:
+    8: 1.0    # Premier League (full weight)
+    82: 1.0   # Bundesliga
+    564: 0.9  # La Liga (slightly less reliable)
+
+
+# ==========================================================
+# MODEL CONFIGURATION
+# ==========================================================
+models:
+  # Which models to use
+  use_poisson: true
+  use_xgboost: true
+  use_neural_network: true
+  use_ensemble: true  # Recommended!
+
+  # Ensemble Weights (must sum to 1.0)
+  ensemble_weights:
+    poisson: 0.40
+    xgboost: 0.35
+    neural_network: 0.25
+
+  # Poisson Model
+  poisson:
+    max_goals: 5
+    home_advantage: 0.15
+    empirical_adjustments: true
+
+  # XGBoost
+  xgboost:
+    max_depth: 6
+    learning_rate: 0.05
+    n_estimators: 200
+
+  # Neural Network
+  neural_network:
+    hidden_layers: [128, 64, 32]
+    dropout: 0.2
+    epochs: 50
+
+
+# ==========================================================
+# PORTFOLIO MANAGEMENT
+# ==========================================================
+portfolio:
+  # Exposure Limits
+  max_total_exposure: 1.0     # 100% of bankroll
+  max_market_exposure: 0.30   # 30% per market
+  max_league_exposure: 0.30   # 30% per league
+  max_match_exposure: 0.10    # 10% per match
+
+  # Diversification
+  min_markets: 2  # Bet on at least 2 different markets
+  min_leagues: 3  # Bet on at least 3 different leagues
+
+  # Correlation
+  max_correlation: 0.70  # Max correlation between bets
+
+
+# ==========================================================
+# CASHOUT OPTIMIZER
+# ==========================================================
+cashout:
+  enabled: true
+
+  # Thresholds
+  min_profit_threshold: 1.20   # Min 20% profit
+  secure_profit_ratio: 0.80    # Secure 80% of EV
+  trailing_stop_percent: 0.10  # Trailing stop at 10%
+
+  # Risk Management
+  max_hold_time: 90  # Maximum minutes to hold
+  confidence_threshold: 0.60
+
+  # Deep Q-Learning (Advanced)
+  use_dqn: false  # Requires training data
+  dqn_model_path: "models/cashout_dqn.pth"
+
+
+# ==========================================================
+# ALERTS & NOTIFICATIONS
+# ==========================================================
+alerts:
+  # Telegram
+  telegram:
+    enabled: false
+    bot_token: "YOUR_BOT_TOKEN"
+    chat_id: "YOUR_CHAT_ID"
+
+  # Discord
+  discord:
+    enabled: false
+    webhook_url: "YOUR_WEBHOOK_URL"
+
+  # Email
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    sender: "your.email@gmail.com"
+    password: "YOUR_APP_PASSWORD"  # Use App Password!
+    recipient: "recipient@example.com"
+
+  # Console
+  console:
+    enabled: true
+
+  # Alert Rules
+  rules:
+    min_value_bet_ev: 0.10        # Min 10% EV for alert
+    min_cashout_profit: 50.0      # Min €50 profit for cashout alert
+    drawdown_threshold: 0.15      # Alert at 15% drawdown
+
+
+# ==========================================================
+# DATA & CACHING
+# ==========================================================
+data:
+  # Database
+  database_file: "game_database_sportmonks.csv"
+  correct_score_database: "correct_score_database.csv"
+
+  # Scraping
+  scrape_seasons: 3  # Last 3 seasons
+  scrape_frequency_hours: 24  # Re-scrape every 24h
+
+  # Caching
+  cache:
+    enabled: true
+    directory: ".api_cache"
+    ttl_fixtures: 1800      # 30 minutes
+    ttl_odds: 300           # 5 minutes
+    ttl_leagues: 86400      # 24 hours
+    ttl_historical: 2592000 # 30 days
+
+
+# ==========================================================
+# DASHBOARD
+# ==========================================================
+dashboard:
+  enabled: true
+  host: "localhost"
+  port: 8501  # Streamlit default
+
+  # Features
+  features:
+    live_monitoring: true
+    performance_charts: true
+    bet_management: true
+    model_comparison: true
+
+  # Refresh Intervals (seconds)
+  refresh:
+    live_odds: 30
+    performance: 60
+    positions: 30
+
+
+# ==========================================================
+# BACKTESTING
+# ==========================================================
+backtesting:
+  # Data Range
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
+
+  # Commission
+  commission_percent: 0.0  # Some bookmakers have commission
+
+  # Output
+  save_results: true
+  results_directory: "backtest_results/"
+
+
+# ==========================================================
+# ADVANCED SETTINGS
+# ==========================================================
+advanced:
+  # Performance
+  use_vectorization: true  # Numpy vectorization (recommended)
+  parallel_requests: false  # Experimental
+
+  # Logging
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    file: "dutching.log"
+    rotation: "1 day"
+    retention: "30 days"
+
+  # Model Monitoring
+  model_monitoring:
+    enabled: true
+    accuracy_threshold: 0.45  # Retrain if below 45%
+    check_frequency_days: 7
+
+  # Features
+  feature_engineering:
+    use_weather: false  # Requires weather API
+    use_injuries: false # Requires injury data
+    use_referee_stats: false
