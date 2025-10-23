@@ -1,0 +1,98 @@
+# ==========================================================
+# AI DUTCHING SYSTEM - GIT IGNORE
+# ==========================================================
+
+# Environment Variables (IMPORTANT!)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+game_database_*.csv
+correct_score_database.csv
+temp_*.csv
+
+# Cache
+.api_cache/
+__pycache__/
+*.pyc
+.cache/
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+dutching.log
+
+# Results & Outputs
+*_results_*.csv
+backtest_results/
+*.pkl
+*.pth
+models/*.pth
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Config (keep template only)
+config.yaml
+
+# Sensitive Data
+*.key
+*.pem
+credentials.json
