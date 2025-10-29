@@ -237,6 +237,10 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/
 sudo dpkg -i cuda-keyring_1.1-1_all.deb
 sudo apt-get update
 sudo apt-get -y install cuda
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+sudo apt install nvidia-cuda-toolkit
+
 
 # Verifiziere
 nvcc --version
@@ -1537,4 +1541,5 @@ Verification Score:   100%
 🤝 **Want to contribute?** → Submit a PR
 
 **Happy Betting! 🎯💰**
+
 
