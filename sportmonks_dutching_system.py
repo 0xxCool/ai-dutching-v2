@@ -219,7 +219,7 @@ class XGDatabase:
 class ComprehensiveAnalyzer:
     def __init__(self, config: Config):
         self.config = config
-        self.xg_db = XGDatabase("game_database_sportmonks.csv", config) 
+        self.xg_db = XGDatabase("game_database_complete.csv", config)  # Hybrid-Scraper Datenbank! 
         self.poisson = VectorizedPoissonModel(config) # Ersetzt
         self.dutching = OptimizedDutchingCalculator(config)
         self.matches_analyzed = 0
