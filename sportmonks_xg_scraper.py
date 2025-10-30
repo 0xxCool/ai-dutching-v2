@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import requests
 import time
@@ -17,58 +18,37 @@ load_dotenv()
 # ==========================================================
 @dataclass
 class ScraperConfig:
-    """Konfiguration für den Sportmonks Scraper"""
+    """Konfiguration für den Sportmonks Scraper (Final)"""
     
     # API Settings
     api_token: str = ""
     base_url: str = "https://api.sportmonks.com/v3/football"
-    max_workers: int = 5  # (Wird aktuell nicht genutzt, da sequenziell stabiler)
-    request_delay: float = 0.3  # Standard, wird in main() überschrieben
+    request_delay: float = 1.3  # Standard (Wird in main() gesetzt)
     
     # Daten-Einstellungen
-    seasons_to_scrape: List[int] = None  # Welche Saisons (z.B. [2023, 2024, 2025])
-    include_current_season: bool = True
-    include_previous_seasons: int = 2  # Wie viele vergangene Saisons
+    seasons_to_scrape: List[int] = None # Wird ignoriert, da wir nach Datum filtern
     
-    # xG Settings (erfordert xG Add-on bei Sportmonks!)
-    include_xg: bool = True  # Wenn False, verwende alternative Metriken
+    # xG Settings
+    include_xg: bool = True
     
     # Output
     output_file: str = "game_database_sportmonks.csv"
-    save_intermediate: bool = True  # Speichere nach jeder Liga
+    save_intermediate: bool = True
     
-    # Performance
-    batch_size: int = 100  # Fixtures pro Batch-Request
-    use_cache: bool = True  # Cache bereits abgerufene Daten
-    cache_file: str = "sportmonks_cache.json"
+    # Startdatum für xG-Daten (von Kim bestätigt)
+    XG_START_DATE: datetime = datetime(2024, 3, 1)
     
-    def __post_init__(self):
-        if self.seasons_to_scrape is None:
-            current_year = datetime.now().year
-            current_month = datetime.now().month
-            
-            # Bestimme aktuelle Saison
-            if current_month >= 8:  # August-Dezember
-                current_season = current_year
-            else:  # Januar-Juli
-                current_season = current_year - 1
-            
-            # Erstelle Liste der zu scrapenden Saisons
-            self.seasons_to_scrape = [
-                current_season - i 
-                for i in range(self.include_previous_seasons + 1)
-            ]
 
 # ==========================================================
-# SPORTMONKS API CLIENT (Erweitert für xG)
+# SPORTMONKS API CLIENT (FINAL)
 # ==========================================================
 class SportmonksXGClient:
-    """Hochperformanter Client für Sportmonks API mit xG-Daten"""
+    """Client für Sportmonks API (xG + Standard Odds)"""
     
     def __init__(self, config: ScraperConfig):
         self.config = config
         self.api_calls = 0
-        self.session = requests.Session()  # Wiederverwendbare Session für Performance
+        self.session = requests.Session()
         
     def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
         """Zentrale Request-Funktion mit Retry-Logik"""
@@ -85,13 +65,12 @@ class SportmonksXGClient:
                 self.api_calls += 1
                 
                 if response.status_code == 429:  # Rate Limit
-                    wait_time = 2 ** attempt  # Exponential backoff
+                    wait_time = 2 ** attempt
                     print(f"⚠️ Rate Limit - warte {wait_time}s...")
                     time.sleep(wait_time)
                     continue
                 
                 response.raise_for_status()
-                # WICHTIG: Delay NACH dem Request, um Server nicht zu überlasten
                 time.sleep(self.config.request_delay)
                 
                 return response.json()
@@ -105,34 +84,20 @@ class SportmonksXGClient:
         return None
     
     def get_leagues(self) -> List[Dict]:
-            """Hole alle verfügbaren Top-Ligen (OHNE PL/Championship wegen API-Bug im Trial)"""
+            """Hole alle verfügbaren Top-Ligen"""
             print("📋 Lade verfügbare Ligen...")
             
-            # Top-Ligen (Sportmonks IDs)
-            # IDs 8 (Premier League) und 2 (Championship) entfernt!
             top_league_ids = [
-                # 8,      # Premier League - TEMPORÄR ENTFERNT
-                82,     # Bundesliga
-                564,    # La Liga
-                384,    # Serie A
-                301,    # Ligue 1
-                72,     # Eredivisie
-                271,    # Primeira Liga (Superliga)
-                # 2,      # Championship - TEMPORÄR ENTFERNT
-                390,    # Belgian First Division A
-                501,    # Scottish Premiership
-                1489,   # Brasileirão Série A
+                8, 82, 564, 384, 301, 72, 271, 2, 390, 501, 1489
             ]
             
             leagues = []
-            # Füge einen kleinen Delay hinzu, um Rate Limits sicher zu vermeiden
-            initial_delay = 1.3 # Entspricht unserem Haupt-Request-Delay
+            initial_delay = 1.3 
             
             print(f"Lade Daten für {len(top_league_ids)} Ligen...")
             for league_id in tqdm(top_league_ids, desc="Lade Ligainformationen"):
-                # Warte nur vor der ersten Anfrage länger
                 if leagues:
-                    time.sleep(0.2) # Kurzer Delay zwischen Liga-Abfragen
+                    time.sleep(0.2)
                 else:
                     time.sleep(initial_delay)
 
@@ -146,215 +111,234 @@ class SportmonksXGClient:
             return leagues
     
     def get_seasons_for_league(self, league_id: int) -> List[Dict]:
-            """Hole Saisons für eine Liga (KORRIGIERT)"""
+            """
+            Hole Saisons (NEUER, KORREKTER ANSATZ von Kim: /leagues/{id}?include=seasons)
+            """
             
-            # KORREKTE V3-SYNTAX:
-            endpoint = 'seasons'
-            params = {'filters': f'leagues:{league_id}'}
+            # Kims neuer, korrekter Endpunkt
+            endpoint = f"leagues/{league_id}"
+            params = {'include': 'seasons'}
+            
+            print(f"DEBUG: Versuche Kims neuen Ansatz: /leagues/{league_id}?include=seasons")
+            
             data = self._make_request(endpoint, params)
-            
+
             if not data or 'data' not in data:
+                print(f" 	 ⚠️ (DEBUG: Kein 'data'-Objekt für Liga {league_id} gefunden.)")
+                return []
+
+            # 'data' ist das Liga-Objekt, 'seasons' ist darin verschachtelt
+            league_data = data['data']
+            seasons_list = league_data.get('seasons') # Hole die "included" Saisons
+
+            if not seasons_list or not isinstance(seasons_list, list):
+                print(f" 	 ⚠️ (DEBUG: Liga {league_id} hat keinen 'seasons'-Include zurückgegeben.)")
                 return []
             
-            print(f"DEBUG: API returned {len(data['data'])} seasons for league {league_id}")
+            # Ab hier ist die Logik gleich: Filtere die Saisons nach Datum
+            relevant_seasons = []
+            xg_start_date = self.config.XG_START_DATE.date()
 
-            # KORREKTER FILTER:
-            # Wir nehmen ALLE Saisons, die der API-Plan liefert
-            seasons = []
-            for season in data['data']:
-                if season.get('id') and season.get('name'):
-                    seasons.append(season)
+            for season in seasons_list:
+                # Wir brauchen Saisons, die 2024 oder später enden
+                if season.get('id') and season.get('name') and season.get('ending_at'):
+                    try:
+                        ending_date = datetime.fromisoformat(season['ending_at']).date()
+                        if ending_date >= xg_start_date:
+                            relevant_seasons.append(season)
+                    except (ValueError, TypeError):
+                        continue # Ignoriere Saisons mit ungültigem Datum
             
-            return seasons
+            print(f"DEBUG: API returned {len(seasons_list)} seasons, {len(relevant_seasons)} sind relevant (post-März-2024).")
+            return relevant_seasons
     
     def get_fixtures_for_season(self, season_id: int, league_name: str) -> List[Dict]:
-            """
-            Hole alle Fixtures für eine Saison (NEUER ANSATZ via /seasons/{id} include)
-            Dieser Ansatz wurde vom Sportmonks-Support (Fred) vorgeschlagen,
-            um den Paginierungs-Bug im /fixtures-Endpunkt zu umgehen.
-            """
+            """Hole alle Fixtures für eine Saison (via /seasons/{id} include)
+               (FINAL: JETZT MIT KORREKTEM xGFixture INCLUDE)"""
             
-            print(f" 	 (DEBUG: Versuche neuen Ansatz: /seasons/{season_id}?include=fixtures...)")
-
-            # KORREKTER ENDPUNKT (von Fred vorgeschlagen)
-            # Wir rufen die Saison selbst auf, nicht den Fixtures-Endpunkt
+            print(f" 	 (DEBUG: Versuche Ansatz: /seasons/{season_id}?include=fixtures...)")
             endpoint = f"seasons/{season_id}"
             
-            # KORREKTE INCLUDES (verschachtelt, wie von Fred vorgeschlagen)
-            # Wir holen die Fixtures UND deren Teilnehmer, Scores & Statistiken
+            # === FINALE KORREKTUR HIER: 'fixtures.xGFixture' hinzugefügt ===
             params = {
-                'include': 'fixtures.participants;fixtures.scores;fixtures.statistics'
+                'include': 'fixtures.participants;fixtures.scores;fixtures.statistics;league;fixtures.xGFixture'
             }
 
-            # Mache EINEN EINZIGEN Request für die Saison + alle ihre Fixtures
-            # Der eingebaute request_delay=1.3s gilt hier
             data = self._make_request(endpoint, params)
 
-            # Fehlerbehandlung
             if not data or 'data' not in data:
-                print(f" 	 ⚠️ (DEBUG: Neuer Ansatz - Kein 'data'-Objekt für Saison {season_id} gefunden.)")
+                print(f" 	 ⚠️ (DEBUG: Kein 'data'-Objekt für Saison {season_id} gefunden.)")
                 return []
 
-            # 'data' ist jetzt das Saison-Objekt
             season_data = data['data']
-
-            # Die Fixtures sind jetzt ein verschachteltes Objekt IN der Saison-Antwort
             fixtures = season_data.get('fixtures')
-
-            # Prüfen, ob Fixtures vorhanden und eine Liste sind
+            league_info = season_data.get('league', {})
+            
             if not fixtures or not isinstance(fixtures, list):
-                print(f" 	 ⚠️ (DEBUG: Neuer Ansatz - Saison {season_id} hat keine 'fixtures' geladen.)")
-                # Dies ist das erwartete Verhalten, wenn der Plan keine Spieldaten für diese Saison enthält
+                print(f" 	 ⚠️ (DEBUG: Saison {season_id} hat keine 'fixtures' geladen.)")
                 return []
             
-            # (Härtung) Filtere Strings oder kaputte Daten heraus
-            clean_fixtures = [f for f in fixtures if isinstance(f, dict)]
-            
+            clean_fixtures = []
+            for f in fixtures:
+                if isinstance(f, dict):
+                    f['league_info_from_season'] = league_info
+                    clean_fixtures.append(f)
+                
             if len(clean_fixtures) < len(fixtures):
                 print(f" 	 (DEBUG: {len(fixtures) - len(clean_fixtures)} ungültige Einträge in fixtures-Liste gefiltert.)")
 
-            # Da wir eine einzige Antwort erhalten, ersetzen wir die tqdm-Schleife durch eine Log-Meldung
-            print(f" 	 (DEBUG: Neuer Ansatz - {len(clean_fixtures)} Fixtures in einer Antwort erhalten.)")
-            
-            # Wir brauchen hier keine tqdm-Schleife mehr, da alle Daten auf einmal kommen.
-            # Die Verarbeitung (Filterung) findet jetzt in `scrape_league` statt.
+            print(f" 	 (DEBUG: {len(clean_fixtures)} Fixtures in einer Antwort erhalten.)")
             return clean_fixtures
     
-    # === DIESE FUNKTION MUSS INNERHALB DER "SportmonksXGClient"-KLASSE SEIN ===
-    def extract_xg_from_fixture(self, fixture: Dict) -> Dict:
-        """Extrahiere xG-Daten aus einem Fixture (GEHÄRTET, KORRIGIERT FÜR state_id)"""
-        
-        result = {
-            'fixture_id': None, 'date': None, 'home_team': None, 'away_team': None,
-            'home_xg': 0.0, 'away_xg': 0.0, 'home_score': None, 'away_score': None,
-            'league': 'Unknown', 'season': 'Unknown', 'status': 'Unknown'
-        }
-
-        if not isinstance(fixture, dict):
-             print("(DEBUG: extract_xg_from_fixture erhielt keinen dict)")
-             return result
-
-        try:
-            result['fixture_id'] = fixture.get('id')
-            result['date'] = fixture.get('starting_at')
-            
-            league_info = fixture.get('league', {})
-            result['league'] = league_info.get('name', 'Unknown') if isinstance(league_info, dict) else 'InvalidLeagueData'
-            
-            season_info = fixture.get('season', {})
-            result['season'] = season_info.get('name', 'Unknown') if isinstance(season_info, dict) else 'InvalidSeasonData'
-            
-            # === KORREKTUR FÜR STATUS (state_id) ===
-            state_id = fixture.get('state_id')
-            
-            # 5 = Finished
-            # 6 = Finished (After Extra Time)
-            # 7 = Finished (After Penalties)
-            
-            if state_id in [5, 6, 7]:
-                result['status'] = 'FT' 
-            elif state_id == 1:
-                result['status'] = 'NS'
-            elif state_id == 2:
-                result['status'] = 'LIVE'
-            else:
-                state_info = fixture.get('state', {})
-                status_str = state_info.get('state', 'Unknown') if isinstance(state_info, dict) else 'InvalidStateData'
-                if 'FT' in status_str or 'AET' in status_str or 'PEN' in status_str:
-                     result['status'] = 'FT'
-                else:
-                     result['status'] = status_str
-
-            # Extrahiere Team-Namen
-            participants = fixture.get('participants', [])
-            if isinstance(participants, list):
-                for p in participants:
-                     if isinstance(p, dict):
-                         meta = p.get('meta', {})
-                         if isinstance(meta, dict):
-                             location = meta.get('location')
-                             if location == 'home':
-                                 result['home_team'] = p.get('name')
-                             elif location == 'away':
-                                 result['away_team'] = p.get('name')
-
-                if not result['home_team'] and len(participants) >= 1 and isinstance(participants[0], dict):
-                    result['home_team'] = participants[0].get('name')
-                if not result['away_team'] and len(participants) >= 2 and isinstance(participants[1], dict):
-                    result['away_team'] = participants[1].get('name')
-            else:
-                 if result['fixture_id']:
-                    print(f"(DEBUG: fixture {result['fixture_id']} hat ungültige participants-Daten)")
-
-
-            # Extrahiere Scores
-            scores = fixture.get('scores', [])
-            if isinstance(scores, list):
-                for score in scores:
-                     if isinstance(score, dict):
-                         desc = score.get('description', '').lower()
-                         if 'full' in desc or 'current' in desc or 'final' in desc:
-                             participant_id = score.get('participant_id')
-                             score_data = score.get('score', {})
-                             goals = score_data.get('goals') if isinstance(score_data, dict) else None
-                             
-                             if goals is not None and isinstance(participants, list):
-                                 for p in participants:
-                                     if isinstance(p, dict) and p.get('id') == participant_id:
-                                         meta = p.get('meta', {})
-                                         if isinstance(meta, dict):
-                                             location = meta.get('location')
-                                             if location == 'home':
-                                                 result['home_score'] = int(goals)
-                                             elif location == 'away':
-                                                 result['away_score'] = int(goals)
-            else:
-                if result['fixture_id']:
-                    print(f"(DEBUG: fixture {result['fixture_id']} hat ungültige scores-Daten)")
-
-
-            # Extrahiere xG aus Statistics
-            statistics = fixture.get('statistics', [])
-            if isinstance(statistics, list):
-                for stat in statistics:
-                     if isinstance(stat, dict):
-                         stat_data = stat.get('data', [])
-                         if isinstance(stat_data, list):
-                             for data_point in stat_data:
-                                 if isinstance(data_point, dict):
-                                     type_id = data_point.get('type_id')
-                                     
-                                     if type_id == 52:  # xG
-                                         participant_id = data_point.get('participant_id')
-                                         xg_value = data_point.get('value')
-                                         
-                                         if xg_value is not None and isinstance(participants, list):
-                                             for p in participants:
-                                                 if isinstance(p, dict) and p.get('id') == participant_id:
-                                                     meta = p.get('meta', {})
-                                                     if isinstance(meta, dict):
-                                                         location = meta.get('location')
-                                                         try:
-                                                             xg_float = float(xg_value)
-                                                             if location == 'home':
-                                                                 result['home_xg'] = xg_float
-                                                             elif location == 'away':
-                                                                 result['away_xg'] = xg_float
-                                                         except (ValueError, TypeError):
-                                                              if result['fixture_id']:
-                                                                  print(f"(DEBUG: fixture {result['fixture_id']} hat ungültigen xG-Wert: {xg_value})")
-            else:
-                if result['fixture_id']:
-                    print(f"(DEBUG: fixture {result['fixture_id']} hat ungültige statistics-Daten)")
-        
-        except Exception as e:
-            print(f"\n(WARNUNG: Unerwarteter Fehler in extract_xg_from_fixture für Spiel {result.get('fixture_id', 'UNKNOWN')}: {e})")
-            return result
-            
-        return result
+    # === HIER IST DIE KORREKTE PLATZIERUNG ===
     
+    def get_odds_for_fixture(self, fixture_id: int) -> Dict:
+            """Hole Quoten für ein spezifisches historisches Spiel (FINAL: PRE-MATCH FEED)"""
+            
+            # === KORREKTER ENDPUNKT (PRE-MATCH, wie von Kim ZULETZT bestätigt) ===
+            endpoint = f'odds/pre-match/fixtures/{fixture_id}'
+            
+            params = {
+                'include': 'market;bookmaker' # Wir brauchen den Markt und den Bookmaker
+            }
+            
+            data = self._make_request(endpoint, params)
+            
+            if not data or 'data' not in data:
+                return {} # Leeres Dict zurückgeben, wenn keine Quoten
+            
+            return self._parse_sportmonks_odds(data['data'])
+        
+    def _parse_sportmonks_odds(self, odds_data: List[Dict]) -> Dict:
+            """Parse die PRE-MATCH Odds-Daten und suche nach 3Way Result"""
+            
+            odds_dict = {
+                'odds_home': None,
+                'odds_draw': None,
+                'odds_away': None
+            }
+            
+            # Finde den "3Way Result" Markt
+            for odds_item in odds_data:
+                market = odds_item.get('market')
+                if not market or market.get('name') != '3Way Result':
+                    continue
+                
+                bookmaker_odds_list = odds_item.get('bookmaker', {}).get('odds', [])
+                if not bookmaker_odds_list:
+                    continue
+                
+                odds_values = bookmaker_odds_list[0].get('odds', [])
+                if not odds_values:
+                    continue
+
+                home_odd = next((o['value'] for o in odds_values if o['label'] == 'Home'), 0)
+                draw_odd = next((o['value'] for o in odds_values if o['label'] == 'Draw'), 0)
+                away_odd = next((o['value'] for o in odds_values if o['label'] == 'Away'), 0)
+                
+                if all([home_odd, draw_odd, away_odd]):
+                    odds_dict['odds_home'] = float(home_odd)
+                    odds_dict['odds_draw'] = float(draw_odd)
+                    odds_dict['odds_away'] = float(away_odd)
+                    
+                    return odds_dict 
+            
+            return odds_dict
+
+    def extract_xg_from_fixture(self, fixture: Dict) -> Dict:
+            """Extrahiere xG-Daten aus einem Fixture (FINAL: Liest 'xgfixture'-Liste korrekt)"""
+            
+            result = {
+                'fixture_id': None, 'date': None, 'home_team': None, 'away_team': None,
+                'home_xg': 0.0, 'away_xg': 0.0, 'home_score': None, 'away_score': None,
+                'league': 'Unknown', 'season': 'Unknown', 'status': 'Unknown'
+            }
+
+            if not isinstance(fixture, dict):
+                print("(DEBUG: extract_xg_from_fixture erhielt keinen dict)")
+                return result
+
+            try:
+                result['fixture_id'] = fixture.get('id')
+                result['date'] = fixture.get('starting_at')
+                
+                league_info = fixture.get('league_info_from_season', {})
+                result['league'] = league_info.get('name', 'Unknown') if isinstance(league_info, dict) else 'InvalidLeagueData'
+                
+                season_info = fixture.get('season', {})
+                result['season'] = season_info.get('name', 'Unknown') if isinstance(season_info, dict) else 'InvalidSeasonData'
+                
+                # Status-Logik (ist korrekt)
+                state_id = fixture.get('state_id')
+                if state_id in [5, 6, 7]:
+                    result['status'] = 'FT' 
+                else:
+                    state_info = fixture.get('state', {})
+                    status_str = state_info.get('state', 'Unknown') if isinstance(state_info, dict) else 'InvalidStateData'
+                    if 'FT' in status_str or 'AET' in status_str or 'PEN' in status_str:
+                        result['status'] = 'FT'
+                    else:
+                        result['status'] = status_str
+
+                # Teilnehmer-Logik (ist korrekt)
+                participants = fixture.get('participants', [])
+                if isinstance(participants, list):
+                    for p in participants:
+                        if isinstance(p, dict) and p.get('meta', {}).get('location') == 'home':
+                            result['home_team'] = p.get('name')
+                        elif isinstance(p, dict) and p.get('meta', {}).get('location') == 'away':
+                            result['away_team'] = p.get('name')
+
+                # Scores-Logik (ist korrekt)
+                scores = fixture.get('scores', [])
+                if isinstance(scores, list):
+                    for score in scores:
+                        if isinstance(score, dict):
+                            desc = score.get('description', '').lower()
+                            # Historische Daten verwenden oft 'CURRENT' statt 'FULLTIME'
+                            if 'current' in desc or 'full' in desc or 'final' in desc:
+                                participant_id = score.get('participant_id')
+                                score_data = score.get('score', {})
+                                goals = score_data.get('goals') if isinstance(score_data, dict) else None
+                                
+                                if goals is not None:
+                                    # Finde heraus, ob das 'home' oder 'away' ist
+                                    if isinstance(participants, list) and len(participants) > 0:
+                                        if participants[0].get('id') == participant_id: # Annahme: participants[0] ist home
+                                            result['home_score'] = int(goals)
+                                        elif len(participants) > 1 and participants[1].get('id') == participant_id: # Annahme: participants[1] ist away
+                                            result['away_score'] = int(goals)
+
+                # === KORRIGIERTE xG-LOGIK (BASIEREND AUF DEINEM JSON) ===
+                xg_data_list = fixture.get('xgfixture') # Es ist eine LISTE
+                
+                if isinstance(xg_data_list, list):
+                    for xg_item in xg_data_list:
+                        if isinstance(xg_item, dict):
+                            
+                            # type_id 5304 scheint das Haupt-xG zu sein
+                            if xg_item.get('type_id') == 5304: 
+                                location = xg_item.get('location')
+                                value = xg_item.get('data', {}).get('value')
+                                
+                                if value is not None:
+                                    try:
+                                        if location == 'home':
+                                            result['home_xg'] = float(value)
+                                        elif location == 'away':
+                                            result['away_xg'] = float(value)
+                                    except (ValueError, TypeError):
+                                        pass # Behalte 0.0, wenn Wert ungültig ist
+                # === ENDE DER KORREKTUR ===
+            
+            except Exception as e:
+                print(f"\n(WARNUNG: Unerwarteter Fehler in extract_xg_from_fixture für Spiel {result.get('fixture_id', 'UNKNOWN')}: {e})")
+                return result
+                
+            return result
+
 # ==========================================================
-# HAUPT-SCRAPER (ANGEPASST FÜR RESUME & STABILITÄT)
+# HAUPT-SCRAPER (FINAL)
 # ==========================================================
 class SportmonksXGScraper:
     """Hauptklasse für das Scraping von xG-Daten"""
@@ -362,135 +346,168 @@ class SportmonksXGScraper:
     def __init__(self, config: ScraperConfig):
         self.config = config
         self.client = SportmonksXGClient(config)
-        self.all_data = [] # Hält die Daten im Speicher
+        self.all_data = [] 
         self.completed_leagues = set()
         self.temp_file_path = f"temp_{self.config.output_file}"
         
-        # === NEUE LOGIK: LADE CACHE ===
+        # Definiere den Startpunkt
+        self.xg_start_date = self.config.XG_START_DATE.date()
+        self.last_scraped_date = self.xg_start_date
+
         if os.path.exists(self.temp_file_path):
             print(f"🔄 Lade Zwischenstand aus {self.temp_file_path}...")
             try:
                 cached_df = pd.read_csv(self.temp_file_path)
+                cached_df['date'] = pd.to_datetime(cached_df['date'])
+                
+                # Filtere alte Daten (pre-xG) aus dem Cache, falls vorhanden
+                cached_df = cached_df[cached_df['date'].dt.date >= self.xg_start_date]
+                
                 self.all_data = cached_df.to_dict('records')
-                self.completed_leagues = set(cached_df['league'].unique())
-                print(f"✅ {len(self.completed_leagues)} Ligen bereits geladen: {self.completed_leagues}")
-            except pd.errors.EmptyDataError:
-                print(f"⚠️ Temporäre Datei {self.temp_file_path} ist leer.")
+                
+                if not cached_df.empty:
+                    self.last_scraped_date = cached_df['date'].max().date()
+                    print(f"✅ Letztes Spiel im Cache vom {self.last_scraped_date}. Scrape ab da weiter.")
+                else:
+                    print(f"ℹ️ Cache-Datei enthielt nur veraltete Daten (vor {self.xg_start_date}). Starte neu.")
+
             except Exception as e:
-                print(f"❌ Fehler beim Laden der Cache-Datei: {e}")
+                print(f"❌ Fehler beim Laden der Cache-Datei: {e}. Starte neu ab {self.xg_start_date}.")
+                self.last_scraped_date = self.xg_start_date
+        else:
+            print(f"ℹ️ Keine Cache-Datei gefunden. Starte Scrape ab {self.xg_start_date}.")
+
 
     def scrape_league(self, league: Dict) -> pd.DataFrame:
-            """Scrape alle Daten für eine Liga (GEHÄRTET: Fängt Fehler pro Spiel ab, xG-Filter ENTFERNT)"""
-            league_id = league.get('id')
-            league_name = league.get('name', 'Unknown')
-            
-            print(f"\n🏆 {league_name} (ID: {league_id})")
-            print("=" * 60)
-            
-            seasons = self.client.get_seasons_for_league(league_id)
-            
-            if not seasons:
-                print(f"⚠️  Keine Saisons gefunden")
-                return pd.DataFrame()
-            
-            print(f"📅 {len(seasons)} Saisons gefunden: {[s.get('name') for s in seasons]}")
-            
-            league_data = []
-            
-            # Scrape jede Saison
-            for season in seasons:
-                season_id = season.get('id')
-                season_name = season.get('name')
+                """Scrape alle Daten für eine Liga (INKLUSIVE HISTORISCHER QUOTEN & DATUMS/XG-FILTER)"""
+                league_id = league.get('id')
+                league_name = league.get('name', 'Unknown')
                 
-                print(f"\n 	🔄 Saison {season_name}...")
+                print(f"\n🏆 {league_name} (ID: {league_id})")
+                print("=" * 60)
                 
-                # 1. Hole die (hoffentlich saubere) Liste der Spiele
-                fixtures = self.client.get_fixtures_for_season(season_id, league_name)
+                seasons = self.client.get_seasons_for_league(league_id)
                 
-                if not fixtures:
-                    print(f" 	 	⚠️ Keine Spiele gefunden")
-                    continue
+                if not seasons:
+                    print(f"⚠️  Keine relevanten Saisons (post-März-2024) gefunden")
+                    return pd.DataFrame()
                 
-                season_added_games_count = 0 # Umbenannt für Klarheit
+                print(f"📅 {len(seasons)} relevante Saisons gefunden: {[s.get('name') for s in seasons]}")
                 
-                # 2. Verarbeite die Spiele (mit try...except)
-                for fixture in fixtures:
-                    try:
-                        # === HIER IST DIE KORREKTUR: "self.client." wurde hinzugefügt ===
-                        game_data = self.client.extract_xg_from_fixture(fixture)
-                        
-                        # === ANGEPASSTE BEDINGUNG (OHNE xG > 0) ===
-                        # Speichere alle abgeschlossenen Spiele mit Teams
-                        if (game_data['status'] in ['FT', 'AET', 'FT_PEN'] and 
-                            game_data['home_team'] and game_data['away_team']):
-                            league_data.append(game_data)
-                            season_added_games_count += 1
+                league_data = []
+                
+                for season in seasons:
+                    season_id = season.get('id')
+                    season_name = season.get('name')
                     
-                    except Exception as e:
-                        # Fange Fehler für EIN Spiel ab, ohne die Liga abzubrechen
-                        fixture_id = 'UNKNOWN_ID'
-                        if isinstance(fixture, dict):
-                            fixture_id = fixture.get('id', 'ID_NOT_FOUND')
-                        print(f"\n 	 	 (WARNUNG: Überspringe Spiel {fixture_id} wegen Fehler: {e})")
-                        continue # Mache mit dem nächsten Spiel weiter
+                    print(f"\n 	🔄 Saison {season_name}...")
+                    
+                    fixtures = self.client.get_fixtures_for_season(season_id, league_name)
+                    
+                    if not fixtures:
+                        print(f" 	 	⚠️ Keine Spiele gefunden")
+                        continue
+                    
+                    season_added_games_count = 0
+                    
+                    print(f" 	 	Filtere Spiele ab {self.last_scraped_date} und hole Quoten für {len(fixtures)} Spiele...")
+                    
+                    for fixture in tqdm(fixtures, desc=f" 	 Saison {season_name} Quoten"):
+                        try:
+                            game_data = self.client.extract_xg_from_fixture(fixture)
+                            
+                            try:
+                                fixture_date_str = game_data.get('date')
+                                if not fixture_date_str:
+                                    continue
+                                fixture_date = datetime.fromisoformat(fixture_date_str).date()
+                            except Exception as e:
+                                print(f"(DEBUG: Ungültiges Datumsformat für Spiel {game_data.get('fixture_id')}: {e})")
+                                continue
+                            
+                            # === FILTER 1: DATUM (MUSS NACH MÄRZ 2024 & NACH LETZTEM SCRAPE SEIN) ===
+                            if fixture_date < self.last_scraped_date:
+                                continue
+                                
+                            # === FILTER 2: STATUS (MUSS ABGESCHLOSSEN SEIN) ===
+                            if not (game_data['status'] in ['FT', 'AET', 'FT_PEN'] and 
+                                    game_data['home_team'] and game_data['away_team']):
+                                continue
+                                
+                            # === SCHRITT 3: HOLE QUOTEN (NUR FÜR RELEVANTE SPIELE) ===
+                            odds_data = self.client.get_odds_for_fixture(fixture['id'])
+                            
+                            combined_data = {**game_data, **odds_data}
+                            
+                            # === FILTER 3: MUSS QUOTEN UND XG HABEN ===
+                            if (combined_data.get('odds_home') and 
+                                (combined_data.get('home_xg', 0) > 0 or combined_data.get('away_xg', 0) > 0)):
+                                
+                                league_data.append(combined_data)
+                                season_added_games_count += 1
+                        
+                        except Exception as e:
+                            fixture_id = 'UNKNOWN_ID'
+                            if isinstance(fixture, dict):
+                                fixture_id = fixture.get('id', 'ID_NOT_FOUND')
+                            print(f"\n 	 	 (WARNUNG: Überspringe Spiel {fixture_id} wegen Fehler: {e})")
+                            continue
+                    
+                    print(f" 	 	✅ {season_added_games_count} abgeschlossene Spiele mit xG UND Quoten hinzugefügt")
                 
-                # Passe die Log-Nachricht an
-                print(f" 	 	✅ {season_added_games_count} abgeschlossene Spiele hinzugefügt (xG ignoriert)")
-            
-            if league_data:
-                df = pd.DataFrame(league_data)
-                print(f"\n 	📊 Gesamt für {league_name}: {len(df)} Spiele")
-                return df
-            
-            return pd.DataFrame()
+                if league_data:
+                    df = pd.DataFrame(league_data)
+                    print(f"\n 	📊 Gesamt für {league_name}: {len(df)} Spiele")
+                    return df
+                
+                return pd.DataFrame()
     
     def scrape_all(self) -> pd.DataFrame:
         """Scrape alle Ligen (mit Resume-Logik)"""
         print("\n" + "=" * 70)
-        print("🚀 SPORTMONKS xG DATA SCRAPER")
+        print("🚀 SPORTMONKS xG DATA SCRAPER (TARGETED: 2024-Heute mit Quoten)")
         print("=" * 70)
         print(f"\n⚙️  Konfiguration:")
-        print(f"  • Saisons: {self.config.seasons_to_scrape} (Ignoriert, nimmt alle vom API-Plan)")
-        print(f"  • xG-Modus: {'Aktiviert' if self.config.include_xg else 'Proxy (Schüsse)'}")
-        print(f"  • Parallele Workers: {self.config.max_workers} (Deaktiviert)")
+        print(f"  • Filter: Nur Spiele ab {self.last_scraped_date} mit xG UND Quoten")
         print(f"  • Output: {self.config.output_file}")
         
-        # Hole Ligen
         leagues = self.client.get_leagues()
         
         if not leagues:
             print("\n❌ Keine Ligen gefunden!")
             return pd.DataFrame(self.all_data)
         
-        # Temporäres DataFrame aus bereits geladenen Daten erstellen
         all_dataframes = []
         if self.all_data:
             all_dataframes.append(pd.DataFrame(self.all_data))
         
         try:
-            # Scrape jede Liga
             for league in leagues:
                 league_name = league.get('name', 'Unknown')
                 
-                # === NEUE LOGIK: ÜBERSPRINGE FERTIGE LIGEN ===
-                if league_name in self.completed_leagues:
-                    print(f"\n⏭️  Überspringe {league_name} (bereits im Cache)")
-                    continue
+                # Die Resume-Logik (ganze Ligen überspringen) ist jetzt weniger wichtig,
+                # da der Datumsfilter (self.last_scraped_date) das meiste überspringt.
+                # Wir lassen sie aber zur Sicherheit drin.
+                # if league_name in self.completed_leagues:
+                #     print(f"\n⏭️  Überspringe {league_name} (bereits im Cache)")
+                #     continue
                 
                 try:
                     df = self.scrape_league(league)
                     
                     if not df.empty:
                         all_dataframes.append(df)
-                        self.all_data.extend(df.to_dict('records')) # Für den Fall eines Absturzes
+                        # self.all_data wird jetzt nur mit NEUEN Daten gefüllt
+                        self.all_data.extend(df.to_dict('records')) 
                         
-                        # Speichere Zwischenstand
                         if self.config.save_intermediate:
-                            print(f" 💾 Speichere Zwischenstand ({len(self.all_data)} Spiele)...")
-                            # Sichern durch Concat (stellt sicher, dass alle Spalten übereinstimmen)
-                            temp_df = pd.concat(all_dataframes, ignore_index=True)
-                            temp_df.to_csv(self.temp_file_path, index=False)
-                            self.completed_leagues.add(league_name) # Markiere als fertig
+                            print(f" 💾 Speichere Zwischenstand...")
+                            # Kombiniere ALTE (aus Cache) + NEUE (von diesem Lauf)
+                            final_df_for_save = pd.DataFrame(self.all_data)
+                            final_df_for_save = final_df_for_save.drop_duplicates(subset=['fixture_id'], keep='last')
+                            
+                            final_df_for_save.to_csv(self.temp_file_path, index=False)
+                            self.completed_leagues.add(league_name)
                     
                 except Exception as e:
                     print(f"❌ Schwerer Fehler bei Liga {league.get('name')}: {e}")
@@ -500,15 +517,11 @@ class SportmonksXGScraper:
             
         except KeyboardInterrupt:
             print("\n\n⚠️ Abgebrochen durch Benutzer")
-            # Springt direkt zum 'finally'-Block
-
         finally:
-            # === NEUE LOGIK: SPEICHERE IMMER BEI ABBRUCH ===
             print("\n⏹️  Speichere finalen Zwischenstand...")
             if self.all_data:
                 try:
                     final_df = pd.DataFrame(self.all_data)
-                    # Entferne Duplikate, falls vorhanden
                     final_df = final_df.drop_duplicates(subset=['fixture_id'], keep='last')
                     final_df.to_csv(self.temp_file_path, index=False)
                     print(f"✅ Zwischenstand in {self.temp_file_path} gespeichert.")
@@ -517,52 +530,52 @@ class SportmonksXGScraper:
             else:
                 print("Keine Daten zum Speichern.")
 
-        # Kombiniere alle Daten
         if self.all_data:
             final_df = pd.DataFrame(self.all_data)
-            
-            # Sortiere nach Datum
-            final_df['date'] = pd.to_datetime(final_df['date'])
-            final_df = final_df.sort_values('date').reset_index(drop=True)
-            
-            # Entferne Duplikate
-            final_df = final_df.drop_duplicates(subset=['fixture_id'], keep='first')
-            
+            final_df = final_df.drop_duplicates(subset=['fixture_id'], keep='last')
+            if 'date' in final_df.columns:
+                final_df['date'] = pd.to_datetime(final_df['date'])
+                final_df = final_df.sort_values('date').reset_index(drop=True)
             return final_df
         
         return pd.DataFrame()
 
     def save_data(self, df: pd.DataFrame):
-        """Speichere Daten als CSV"""
+        """Speichimere Daten als CSV (MIT QUOTEN)"""
         if df.empty:
-            print("\n❌ Keine Daten zum Speichern!")
+            print("\n❌ Keine neuen Daten zum Speichern gefunden!")
+            if os.path.exists(self.config.output_file):
+                 print(f"Behalte existierende Datei: {self.config.output_file}")
             return
         
-        # Wähle nur relevante Spalten für Output
         output_cols = [
-            'date', 'home_team', 'away_team', 
-            'home_xg', 'away_xg', 'league',
-            'home_score', 'away_score', 'status', 'fixture_id'
+            'date', 'league', 'season', 'home_team', 'away_team', 
+            'home_score', 'away_score', 
+            'home_xg', 'away_xg', 
+            'odds_home', 'odds_draw', 'odds_away',
+            'status', 'fixture_id'
         ]
-        # Stelle sicher, dass alle Spalten existieren
+        
         final_cols = [col for col in output_cols if col in df.columns]
         output_df = df[final_cols].copy()
         
+        # === FINALE DATENBANK SPEICHERN ===
+        # Wir überschreiben die alte Datei mit den neuen, relevanten Daten
         output_df.to_csv(self.config.output_file, index=False)
         
         print(f"\n{'='*70}")
         print("✅ SCRAPING ABGESCHLOSSEN")
         print(f"{'='*70}")
         print(f"\n📊 STATISTIKEN:")
-        print(f"  • Gespeicherte Spiele: {len(output_df)}")
-        print(f"  • API-Calls: {self.client.api_calls}")
+        print(f"  • Gespeicherte Spiele (Gesamt): {len(output_df)}")
+        print(f"  • API-Calls in diesem Lauf: {self.client.api_calls}")
         print(f"  • Datei: {self.config.output_file}")
         
         if 'league' in output_df.columns:
             print(f"\n📈 Verteilung nach Ligen:")
             print(output_df['league'].value_counts().to_string())
         
-        if 'date' in output_df.columns:
+        if 'date' in output_df.columns and not output_df.empty:
             print(f"\n📅 Zeitraum: {output_df['date'].min()} bis {output_df['date'].max()}")
         
         if os.path.exists(self.config.output_file):
@@ -574,32 +587,20 @@ class SportmonksXGScraper:
 def main():
     """Hauptfunktion"""
     
-    # Lade API Token
     api_token = os.getenv("SPORTMONKS_API_TOKEN")
     
     if not api_token:
         print("❌ FEHLER: SPORTMONKS_API_TOKEN nicht in .env gefunden!")
-        print("\nBitte erstellen Sie eine .env Datei mit:")
-        print("SPORTMONKS_API_TOKEN=your_token_here")
         return
     
-    # Konfiguration
     config = ScraperConfig(
         api_token=api_token,
-        include_previous_seasons=2,
-        max_workers=3, 	 	 
-        
-        # === KORREKTUR RATE-LIMIT HIER ===
-        # 3000 req/Stunde = 50 req/Minute = 1 req / 1.2s
-        # Wir nehmen 1.3s für einen Sicherheitspuffer.
         request_delay=1.3,
-        
         output_file="game_database_sportmonks.csv",
         save_intermediate=True,
         include_xg=True, 	 	 
     )
     
-    # Starte Scraper
     scraper = SportmonksXGScraper(config)
     
     try:
@@ -608,12 +609,9 @@ def main():
         
     except KeyboardInterrupt:
         print("\n\n⚠️ Abgebrochen durch Benutzer")
-        # Speichern wird jetzt im 'finally'-Block von scrape_all() gehandhabt
-        
     except Exception as e:
         print(f"\n\n❌ KRITISCHER FEHLER: {e}")
         traceback.print_exc()
-        # Auch hier speichern wir, was wir haben
         print("Versuche, Zwischenstand zu speichern...")
         scraper.save_data(pd.DataFrame(scraper.all_data))
 
