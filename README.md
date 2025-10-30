@@ -279,6 +279,60 @@ pip install nvidia-ml-py3
 
 # 4. Optional: XGBoost mit GPU
 pip install xgboost
+
+#5. XGBoost mit GPU-Support (gpu_hist) in WSL installieren
+Hier ist die Schritt-für-Schritt-Anleitung, um XGBoost aus dem Quellcode zu kompilieren. Dies ist die zuverlässigste Methode, um sicherzustellen, dass es deine CUDA 11.8-Installation findet.
+Führe diese Befehle nacheinander in deinem WSL-Terminal aus:
+
+Schritt 1: Vorbereitungen (Abhängigkeiten & Aufräumen)
+Altes XGBoost deinstallieren: (Sehr wichtig!)
+
+pip uninstall xgboost
+Build-Werkzeuge installieren: (Falls noch nicht geschehen)
+
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git
+CUDA Toolkit verifizieren: (Wir müssen sicherstellen, dass nvcc, der CUDA-Compiler, vorhanden ist.)
+
+nvcc --version
+Wenn dies funktioniert (und idealerweise Version 11.8 anzeigt), super! Gehe zu Schritt 4.
+Wenn der Befehl nvcc nicht gefunden wird, musst du das CUDA-Toolkit innerhalb von WSL installieren (passend zu deinem PyTorch 11.8):
+
+sudo apt-get install -y cuda-toolkit-11-8
+Schritt 2: XGBoost aus dem Quellcode kompilieren
+Quellcode herunterladen:
+
+git clone --recursive https://github.com/dmlc/xgboost
+Build-Ordner erstellen:
+
+cd xgboost
+mkdir build
+cd build
+Kompilierung konfigurieren (Der wichtigste Befehl!): Dieser Befehl sucht nach CUDA und aktiviert das GPU-Plugin.
+
+cmake .. -DPLUGIN_CUDA=ON
+(Du solltest in der Ausgabe sehen, dass er CUDA findet.)
+
+Kompilieren: (Das wird einige Minuten dauern. $(nproc) nutzt alle deine CPU-Kerne.)
+
+make -j$(nproc)
+Python-Paket installieren: Nachdem die Kompilierung fertig ist, installiere das Paket mit pip.
+
+cd ../python-package
+pip install .
+Schritt 3: Validierung
+Nach der Installation kannst du sofort testen, ob es funktioniert hat:
+
+Starte Python:
+python3
+
+Importiere XGBoost und erstelle einen Classifier mit gpu_hist:
+
+import xgboost as xgb
+model = xgb.XGBClassifier(tree_method='gpu_hist')
+print("XGBoost mit 'gpu_hist' erfolgreich geladen!")
+exit()
+Wenn diese Befehle ohne den Invalid Input-Fehler durchlaufen, war die Installation erfolgreich.
 ```
 
 ### Schritt 4: Verifikation
@@ -1541,5 +1595,6 @@ Verification Score:   100%
 🤝 **Want to contribute?** → Submit a PR
 
 **Happy Betting! 🎯💰**
+
 
 
