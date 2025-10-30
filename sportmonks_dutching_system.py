@@ -10,6 +10,16 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 from typing import List, Dict, Tuple, Optional
 import requests
+from pathlib import Path
+import pickle
+import torch
+import traceback
+
+# --- NEUE IMPORTE FÜR ML-INTEGRATION ---
+from optimized_poisson_model import VectorizedPoissonModel, PoissonConfig
+from gpu_ml_models import GPUFeatureEngineer, GPUNeuralNetworkPredictor, GPUXGBoostPredictor, GPUConfig
+from continuous_training_system import ModelRegistry
+# ----------------------------------------
 
 load_dotenv()
 
@@ -17,7 +27,7 @@ load_dotenv()
 # KONFIGURATION
 # ==========================================================
 @dataclass
-class Config:
+class Config(PoissonConfig): # Erbt jetzt von PoissonConfig
     BANKROLL: float = 1000.0
     KELLY_CAP: float = 0.25
     MAX_STAKE_PERCENT: float = 0.10
@@ -25,8 +35,6 @@ class Config:
     ADAPTIVE_EDGE_FACTOR: float = 0.10
     MIN_ODDS: float = 1.1
     MAX_ODDS: float = 100.0
-    MAX_GOALS: int = 5
-    HOME_ADVANTAGE: float = 0.15
     SAVE_RESULTS: bool = True
     DEBUG_MODE: bool = False
     
@@ -34,12 +42,18 @@ class Config:
     USE_FALLBACK_DATA: bool = True
     MIN_DATA_CONFIDENCE: float = 0.0
     
+    # Ensemble-Gewichtung
+    WEIGHT_POISSON: float = 0.34
+    WEIGHT_NN: float = 0.33
+    WEIGHT_XGB: float = 0.33
+    
     OUTPUT_FILE: str = field(default_factory=lambda: f'sportmonks_results_{dt.datetime.now():%Y%m%d_%H%M%S}.csv')
 
 # ==========================================================
 # UTILITY-KLASSEN
 # ==========================================================
 class TeamMatcher:
+    # ... (Keine Änderungen hier, Code bleibt gleich) ...
     @staticmethod
     def normalize(name: str) -> str:
         replacements = {
@@ -67,62 +81,11 @@ class TeamMatcher:
                 best_score, best_match = score, candidate
         return best_match
 
-class AdvancedPoissonModel:
-    def __init__(self, config: Config): 
-        self.config = config
-        
-    def calculate_lambdas(self, base_home: float, base_away: float) -> Tuple[float, float]:
-        adj_home = base_home * (1 + self.config.HOME_ADVANTAGE)
-        adj_away = base_away
-        return max(0.3, min(4.0, adj_home)), max(0.3, min(4.0, adj_away))
-    
-    def calculate_probabilities(self, lam_home: float, lam_away: float) -> pd.Series:
-        probs = {}
-        for h in range(self.config.MAX_GOALS + 1):
-            for a in range(self.config.MAX_GOALS + 1):
-                prob = stats.poisson.pmf(h, lam_home) * stats.poisson.pmf(a, lam_away)
-                if h == 0 and a == 0: prob *= 1.08
-                elif h == 1 and a == 1: prob *= 1.05
-                probs[f"{h}-{a}"] = prob
-        total = sum(probs.values())
-        return pd.Series({k: v / total for k, v in probs.items()})
-    
-    def calculate_market_probabilities(self, probs: pd.Series) -> Dict:
-        home_win = sum(probs[s] for s in probs.index if int(s.split('-')[0]) > int(s.split('-')[1]))
-        draw = sum(probs[s] for s in probs.index if int(s.split('-')[0]) == int(s.split('-')[1]))
-        away_win = 1 - home_win - draw
-        
-        over_05 = sum(probs[s] for s in probs.index if sum(map(int, s.split('-'))) > 0.5)
-        over_15 = sum(probs[s] for s in probs.index if sum(map(int, s.split('-'))) > 1.5)
-        over_25 = sum(probs[s] for s in probs.index if sum(map(int, s.split('-'))) > 2.5)
-        over_35 = sum(probs[s] for s in probs.index if sum(map(int, s.split('-'))) > 3.5)
-        
-        btts = sum(probs[s] for s in probs.index 
-                   if int(s.split('-')[0]) > 0 and int(s.split('-')[1]) > 0)
-        
-        home_or_draw = home_win + draw
-        home_or_away = home_win + away_win
-        draw_or_away = draw + away_win
-        
-        return {
-            '3Way Result': {'Home': home_win, 'Draw': draw, 'Away': away_win},
-            'Double Chance': {
-                'Home/Draw': home_or_draw,
-                'Home/Away': home_or_away,
-                'Draw/Away': draw_or_away
-            },
-            'Goals Over/Under': {
-                'Over 0.5': over_05, 'Under 0.5': 1 - over_05,
-                'Over 1.5': over_15, 'Under 1.5': 1 - over_15,
-                'Over 2.5': over_25, 'Under 2.5': 1 - over_25,
-                'Over 3.5': over_35, 'Under 3.5': 1 - over_35
-            },
-            'Both Teams Score': {
-                'Yes': btts, 'No': 1 - btts
-            }
-        }
+# AdvancedPoissonModel-Klasse wird ENTFERNT
+# Wir importieren stattdessen VectorizedPoissonModel
 
 class OptimizedDutchingCalculator:
+    # ... (Keine Änderungen hier, Code bleibt gleich) ...
     def __init__(self, config: Config): 
         self.config = config
         
@@ -177,6 +140,7 @@ class OptimizedDutchingCalculator:
 # XGDatabase
 # ==========================================================
 class XGDatabase:
+    # ... (Keine Änderungen hier, Code bleibt gleich) ...
     def __init__(self, filepath: str, config: Config):
         self.config = config
         self.game_database = self._load_data_from_csv(filepath)
@@ -250,27 +214,130 @@ class XGDatabase:
         return home_lambda, away_lambda, data_confidence
 
 # ==========================================================
-# ANALYZER
+# ANALYZER (STARK ÜBERARBEITET)
 # ==========================================================
 class ComprehensiveAnalyzer:
     def __init__(self, config: Config):
         self.config = config
-        # Verwende korrekte Datenbank-Datei (von sportmonks_xg_scraper.py)
         self.xg_db = XGDatabase("game_database_sportmonks.csv", config) 
-        self.poisson = AdvancedPoissonModel(config)
+        self.poisson = VectorizedPoissonModel(config) # Ersetzt
         self.dutching = OptimizedDutchingCalculator(config)
         self.matches_analyzed = 0
         self.matches_with_odds = 0
         self.matches_with_data = 0
         self.matches_profitable = 0
-    
+        
+        # --- NEUE ML-MODELL-INTEGRATION ---
+        print("\n🤖 Lade trainierte ML-Modelle...")
+        self.registry = ModelRegistry()
+        self.gpu_config = GPUConfig()
+        
+        # Stelle sicher, dass die DB für den Feature Engineer geladen ist
+        if self.xg_db.game_database.empty:
+            print("❌ WARNUNG: Historische Datenbank ist leer. ML-Features können nicht berechnet werden.")
+            self.feature_engineer = None
+            self.nn_model = None
+            self.xgb_model = None
+        else:
+            self.feature_engineer = GPUFeatureEngineer(self.xg_db.game_database, self.gpu_config.device)
+            self.nn_model = self._load_champion_model('neural_net')
+            self.xgb_model = self._load_champion_model('xgboost')
+        
+        self.ensemble_weights = {
+            'poisson': self.config.WEIGHT_POISSON,
+            'nn': self.config.WEIGHT_NN,
+            'xgb': self.config.WEIGHT_XGB
+        }
+        if not self.nn_model or not self.xgb_model:
+            print("⚠️ WARNUNG: Konnte nicht alle ML-Modelle laden. Verwende reines Poisson-Modell.")
+            self.ensemble_weights = {'poisson': 1.0, 'nn': 0.0, 'xgb': 0.0}
+        # ------------------------------------
+
+    def _load_champion_model(self, model_type: str) -> Optional[object]:
+        """Lädt das beste trainierte Modell aus der Registry."""
+        champion_version = self.registry.get_champion(model_type)
+        if not champion_version:
+            print(f"  ❌ Kein 'Champion'-Modell für '{model_type}' gefunden.")
+            return None
+        
+        model_path = champion_version.model_path
+        if not os.path.exists(model_path):
+            print(f"  ❌ Champion-Modell-Datei fehlt: {model_path}")
+            return None
+            
+        try:
+            if model_type == 'neural_net':
+                # (Annahme: 20 Features, wie in gpu_ml_models.py definiert)
+                model = GPUNeuralNetworkPredictor(input_size=20, gpu_config=self.gpu_config)
+                model.load_checkpoint(Path(model_path).stem) # Lade via Checkpoint-Namen
+                model.model.eval() # Setze in Inferenzmodus
+                print(f"  ✅ Champion 'neural_net' geladen: {champion_version.version_id}")
+                return model
+            
+            elif model_type == 'xgboost':
+                model = GPUXGBoostPredictor(use_gpu=True) # Versucht GPU
+                with open(model_path, 'rb') as f:
+                    model.model = pickle.load(f)
+                model.is_trained = True
+                print(f"  ✅ Champion 'xgboost' geladen: {champion_version.version_id}")
+                return model
+                
+        except Exception as e:
+            print(f"  ❌ Fehler beim Laden von Champion-Modell {model_path}: {e}")
+            return None
+        
+        return None
+
+    def _get_ensemble_probabilities(self, home, away, match_date, base_home_xg, base_away_xg) -> np.ndarray:
+        """Kombiniert Poisson, NN und XGBoost zu einer Vorhersage."""
+        
+        # 1. Poisson-Modell
+        lam_home, lam_away = self.poisson.calculate_lambdas(base_home_xg, base_away_xg)
+        prob_matrix = self.poisson.calculate_score_probabilities(lam_home, lam_away)
+        market_probs_poisson = self.poisson.calculate_market_probabilities(prob_matrix)['3Way Result']
+        poisson_probs = np.array([market_probs_poisson['Home'], market_probs_poisson['Draw'], market_probs_poisson['Away']])
+
+        # 2. ML-Modelle (NN & XGB)
+        if self.feature_engineer and self.nn_model and self.xgb_model:
+            try:
+                # Erstelle Feature-Vektor
+                features_tensor = self.feature_engineer.create_match_features(home, away, match_date)
+                features_np = features_tensor.cpu().numpy().reshape(1, -1)
+                
+                # NN-Vorhersage
+                nn_probs = self.nn_model.predict_proba(features_np)[0]
+                
+                # XGB-Vorhersage
+                xgb_probs = self.xgb_model.predict_proba(features_np)[0]
+                
+                # 3. Ensemble (Gewichtete Mittelung)
+                final_probs = (
+                    self.ensemble_weights['poisson'] * poisson_probs +
+                    self.ensemble_weights['nn'] * nn_probs +
+                    self.ensemble_weights['xgb'] * xgb_probs
+                )
+                
+                return final_probs / final_probs.sum() # Normalisieren
+            
+            except Exception as e:
+                print(f"⚠️ WARNUNG: ML-Feature-Erstellung/Vorhersage fehlgeschlagen für {home} vs {away}. Verwende reines Poisson. Fehler: {e}")
+                return poisson_probs # Fallback auf reines Poisson
+        
+        # Fallback, wenn ML-Modelle nicht geladen wurden
+        return poisson_probs
+
     def analyze_match(self, fixture: Dict, odds_data: Dict) -> List[Dict]:
         self.matches_analyzed += 1
         
-        # Sportmonks verwendet 'participants' statt 'teams'
-        home = fixture['participants'][0]['name']
-        away = fixture['participants'][1]['name']
+        try:
+            home = fixture['participants'][0]['name']
+            away = fixture['participants'][1]['name']
+            match_date = pd.to_datetime(fixture['starting_at'])
+        except Exception as e:
+            print(f"(DEBUG: Konnte Fixture-Daten nicht parsen: {e})")
+            return []
         
+        # 1. Hole Basis-xG für Poisson
         base_home, base_away, data_confidence = self.xg_db.get_xg_based_on_form(
             home, away, debug=self.config.DEBUG_MODE
         )
@@ -280,56 +347,59 @@ class ComprehensiveAnalyzer:
         
         self.matches_with_data += 1
         
-        lam_home, lam_away = self.poisson.calculate_lambdas(base_home, base_away)
-        score_probs = self.poisson.calculate_probabilities(lam_home, lam_away)
-        market_probs = self.poisson.calculate_market_probabilities(score_probs)
+        # 2. Hole Ensemble-Wahrscheinlichkeiten (Poisson + NN + XGB)
+        ensemble_probs_array = self._get_ensemble_probabilities(home, away, match_date, base_home, base_away)
+        
+        # Konvertiere Array zurück in Dictionary-Struktur
+        market_probs = {
+            '3Way Result': {
+                'Home': ensemble_probs_array[0],
+                'Draw': ensemble_probs_array[1],
+                'Away': ensemble_probs_array[2]
+            }
+            # TODO: Erweitere dies, wenn du auch O/U, BTTS etc. mit den ML-Modellen trainierst.
+            # Aktuell trainieren die ML-Modelle nur 1X2 (3 Klassen).
+        }
         
         results = []
         
-        markets_to_analyze = ['3Way Result']
-        if self.config.ANALYZE_MULTIPLE_MARKETS:
-            markets_to_analyze.extend(['Double Chance', 'Goals Over/Under', 'Both Teams Score'])
+        # Analysiere nur 3Way Result, da nur hierfür Ensemble-Probs vorhanden sind
+        market_name = '3Way Result'
         
-        for market_name in markets_to_analyze:
-            if market_name not in odds_data or not odds_data[market_name]:
-                continue
+        if market_name not in odds_data or not odds_data[market_name]:
+            return []
+        
+        odds = odds_data[market_name]['odds']
+        selections = odds_data[market_name]['selections']
+        
+        probs = [market_probs[market_name][sel] for sel in selections]
+        
+        if not all(p > 0 for p in probs):
+            return []
+        
+        stakes, metrics = self.dutching.calculate_value_bet(odds, probs)
+        
+        if stakes and sum(stakes) > 0:
+            self.matches_profitable += 1
             
-            odds = odds_data[market_name]['odds']
-            selections = odds_data[market_name]['selections']
-            
-            # Mappe Sportmonks selections auf unsere Wahrscheinlichkeiten
-            probs = []
-            for sel in selections:
-                if market_name in market_probs and sel in market_probs[market_name]:
-                    probs.append(market_probs[market_name][sel])
-                else:
-                    probs.append(0)
-            
-            if not all(p > 0 for p in probs):
-                continue
-            
-            stakes, metrics = self.dutching.calculate_value_bet(odds, probs)
-            
-            if stakes and sum(stakes) > 0:
-                self.matches_profitable += 1
-                
-                results.append({
-                    'date': dt.datetime.now(dt.UTC),
-                    'home': home,
-                    'away': away,
-                    'market': market_name,
-                    'selections': selections,
-                    'odds': odds,
-                    'probabilities': probs,
-                    'stakes': stakes,
-                    'total_stake': sum(stakes),
-                    'profit': metrics['profit'],
-                    'metrics': metrics
-                })
+            results.append({
+                'date': dt.datetime.now(dt.UTC),
+                'home': home,
+                'away': away,
+                'market': market_name,
+                'selections': selections,
+                'odds': odds,
+                'probabilities': probs,
+                'stakes': stakes,
+                'total_stake': sum(stakes),
+                'profit': metrics['profit'],
+                'metrics': metrics
+            })
         
         return results
     
     def print_summary(self):
+        # ... (Keine Änderungen hier, Code bleibt gleich) ...
         print(f"\n{'='*70}")
         print("📊 ANALYSE-STATISTIKEN")
         print(f"{'='*70}")
@@ -343,6 +413,7 @@ class ComprehensiveAnalyzer:
 # ResultFormatter
 # ==========================================================
 class ResultFormatter:
+    # ... (Keine Änderungen hier, Code bleibt gleich) ...
     def format_dataframe(self, results: List[Dict]) -> pd.DataFrame:
         if not results:
             return pd.DataFrame()
@@ -376,7 +447,7 @@ class ResultFormatter:
         print("="*70 + "\n")
 
 # ==========================================================
-# SPORTMONKS API CLIENT
+# SPORTMONKS API CLIENT (ÜBERARBEITET)
 # ==========================================================
 class SportmonksClient:
     def __init__(self, api_token: str, config: Config):
@@ -384,62 +455,89 @@ class SportmonksClient:
         self.config = config
         self.base_url = "https://api.sportmonks.com/v3/football"
         self.api_calls = 0
-        self.max_api_calls = 2000  # Sportmonks: 3000/hour = ~2000 sicher
+        self.max_api_calls = 2000  # Sicherheitslimit
+        self.session = requests.Session()
         
-    def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
-        """Zentrale Request-Funktion mit Error Handling"""
+    def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
+        """Zentrale Request-Funktion mit Retry-Logik & 1.3s Delay"""
         if self.api_calls >= self.max_api_calls:
             print(f"\n⚠️ API-Limit erreicht ({self.api_calls} Calls)")
-            return {}
-        
-        url = f"{self.base_url}/{endpoint}"
-        
+            return None
+            
         if params is None:
             params = {}
         
         params['api_token'] = self.api_token
+        url = f"{self.base_url}/{endpoint}"
         
-        try:
-            response = requests.get(url, params=params, timeout=15)
-            self.api_calls += 1
-            
-            if response.status_code == 429:
-                print(f"\n⚠️ Rate Limit erreicht!")
-                return {}
-            
-            response.raise_for_status()
-            data = response.json()
-            
-            time.sleep(0.2)  # Rate limiting
-            
-            return data
-            
-        except requests.exceptions.RequestException as e:
-            if self.config.DEBUG_MODE:
-                print(f"API Error: {e}")
-            return {}
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = self.session.get(url, params=params, timeout=20)
+                self.api_calls += 1
+                
+                if response.status_code == 429:  # Rate Limit
+                    wait_time = 2 ** attempt
+                    print(f"⚠️ Rate Limit - warte {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                
+                response.raise_for_status()
+                # WICHTIG: Delay NACH dem Request
+                time.sleep(1.3) # Respektiere 3000 req/hr Limit
+                
+                return response.json()
+                
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:
+                    print(f"❌ API-Fehler nach {max_retries} Versuchen: {e}")
+                    return None
+                time.sleep(1)
+        
+        return None
     
     def get_fixtures(self, date_from: str, date_to: str, league_ids: List[int]) -> List[Dict]:
-        """Hole Fixtures für bestimmte Ligen und Zeitraum"""
-        all_fixtures = []
+        """Hole Fixtures für bestimmte Ligen und Zeitraum (NEUE V3-SYNTAX)"""
         
-        for league_id in league_ids:
+        # Konvertiere Liga-IDs in CSV-String
+        leagues_str = ",".join(map(str, league_ids))
+        
+        # KORREKTER ENDPUNKT: /fixtures/between/{FROM_DATE}/{TO_DATE}
+        endpoint = f"fixtures/between/{date_from}/{date_to}"
+        
+        params = {
+            'leagues': leagues_str,
+            'include': 'participants;league' # league für Logging
+        }
+        
+        all_fixtures = []
+        page = 1
+        
+        while True:
             if self.api_calls >= self.max_api_calls:
                 break
             
-            params = {
-                'filters': f'leagueIds:{league_id};fixtureStartingAt:{date_from},{date_to}',
-                'include': 'participants'
-            }
+            params['page'] = page
+            data = self._make_request(endpoint, params)
             
-            data = self._make_request('fixtures', params)
+            if not data or 'data' not in data:
+                break
             
-            if data and 'data' in data:
-                fixtures = data['data']
-                # Filter nur "Not Started" Status
-                upcoming = [f for f in fixtures if f.get('state', {}).get('state') == 'NS']
-                all_fixtures.extend(upcoming)
-        
+            fixtures = data['data']
+            if not fixtures:
+                break
+            
+            # Filter nur "Not Started" Status
+            upcoming = [f for f in fixtures if f.get('state_id') == 1]
+            all_fixtures.extend(upcoming)
+            
+            # Paginierungs-Check
+            pagination = data.get('pagination', {})
+            if not pagination.get('has_more', False):
+                break
+                
+            page += 1
+            
         return all_fixtures
     
     def get_odds_for_fixture(self, fixture_id: int) -> Dict:
@@ -448,6 +546,7 @@ class SportmonksClient:
             'include': 'bookmaker;market'
         }
         
+        # Verwende den robusten _make_request
         data = self._make_request(f'odds/pre-match/fixtures/{fixture_id}', params)
         
         if not data or 'data' not in data:
@@ -459,77 +558,74 @@ class SportmonksClient:
         """Parse Sportmonks Odds in unser Format"""
         result = self._empty_odds_dict()
         
-        for odds_item in odds_data:
-            if 'market' not in odds_item:
+        # Finde den "primären" Bookie (z.B. Pinnacle, ID 2)
+        primary_odds = [o for o in odds_data if o.get('bookmaker', {}).get('id') == 2]
+        if not primary_odds:
+             # Fallback: Nimm den ersten verfügbaren Bookie
+             primary_odds = odds_data
+
+        for odds_item in primary_odds:
+            market = odds_item.get('market')
+            if not market:
                 continue
-            
-            market = odds_item['market']
+
             market_name = market.get('name', '')
             
-            # 3Way Result (1X2)
-            if market_name == '3Way Result':
-                bookmaker_odds = odds_item.get('bookmaker', {})
-                if 'odds' in bookmaker_odds:
-                    odds_values = bookmaker_odds['odds']
-                    
-                    home_odd = next((o['value'] for o in odds_values if o['label'] == 'Home'), 0)
-                    draw_odd = next((o['value'] for o in odds_values if o['label'] == 'Draw'), 0)
-                    away_odd = next((o['value'] for o in odds_values if o['label'] == 'Away'), 0)
-                    
-                    if all([home_odd, draw_odd, away_odd]):
-                        result['3Way Result'] = {
-                            'odds': [float(home_odd), float(draw_odd), float(away_odd)],
-                            'selections': ['Home', 'Draw', 'Away']
-                        }
+            # Hole Odds-Werte
+            bookmaker_odds_list = odds_item.get('bookmaker', {}).get('odds', [])
+            if not bookmaker_odds_list:
+                continue
             
-            # Goals Over/Under
-            elif 'Goals Over/Under' in market_name:
-                bookmaker_odds = odds_item.get('bookmaker', {})
-                if 'odds' in bookmaker_odds:
-                    odds_values = bookmaker_odds['odds']
-                    
-                    over_odd = next((o['value'] for o in odds_values if 'Over' in o['label']), 0)
-                    under_odd = next((o['value'] for o in odds_values if 'Under' in o['label']), 0)
-                    
-                    # Extrahiere Line (z.B. "2.5")
-                    line_label = next((o['label'] for o in odds_values if 'Over' in o['label']), '')
-                    
-                    if all([over_odd, under_odd]):
-                        result['Goals Over/Under'] = {
-                            'odds': [float(over_odd), float(under_odd)],
-                            'selections': [line_label, line_label.replace('Over', 'Under')]
-                        }
+            # Nimm den ersten (und oft einzigen) Satz von Odds-Daten
+            odds_values = bookmaker_odds_list[0].get('odds', [])
+            if not odds_values:
+                continue
+
+            # 3Way Result (1X2)
+            if market_name == '3Way Result' and not result.get('3Way Result'):
+                home_odd = next((o['value'] for o in odds_values if o['label'] == 'Home'), 0)
+                draw_odd = next((o['value'] for o in odds_values if o['label'] == 'Draw'), 0)
+                away_odd = next((o['value'] for o in odds_values if o['label'] == 'Away'), 0)
+                
+                if all([home_odd, draw_odd, away_odd]):
+                    result['3Way Result'] = {
+                        'odds': [float(home_odd), float(draw_odd), float(away_odd)],
+                        'selections': ['Home', 'Draw', 'Away']
+                    }
+            
+            # Goals Over/Under (Suche speziell nach 2.5)
+            elif 'Goals Over/Under' in market_name and market.get('handicap') == '2.5' and not result.get('Goals Over/Under'):
+                over_odd = next((o['value'] for o in odds_values if o['label'] == 'Over'), 0)
+                under_odd = next((o['value'] for o in odds_values if o['label'] == 'Under'), 0)
+                
+                if all([over_odd, under_odd]):
+                    result['Goals Over/Under'] = {
+                        'odds': [float(over_odd), float(under_odd)],
+                        'selections': ['Over 2.5', 'Under 2.5']
+                    }
             
             # Both Teams Score
-            elif 'Both Teams Score' in market_name:
-                bookmaker_odds = odds_item.get('bookmaker', {})
-                if 'odds' in bookmaker_odds:
-                    odds_values = bookmaker_odds['odds']
-                    
-                    yes_odd = next((o['value'] for o in odds_values if o['label'] == 'Yes'), 0)
-                    no_odd = next((o['value'] for o in odds_values if o['label'] == 'No'), 0)
-                    
-                    if all([yes_odd, no_odd]):
-                        result['Both Teams Score'] = {
-                            'odds': [float(yes_odd), float(no_odd)],
-                            'selections': ['Yes', 'No']
-                        }
+            elif 'Both Teams Score' in market_name and not result.get('Both Teams Score'):
+                yes_odd = next((o['value'] for o in odds_values if o['label'] == 'Yes'), 0)
+                no_odd = next((o['value'] for o in odds_values if o['label'] == 'No'), 0)
+                
+                if all([yes_odd, no_odd]):
+                    result['Both Teams Score'] = {
+                        'odds': [float(yes_odd), float(no_odd)],
+                        'selections': ['Yes', 'No']
+                    }
             
             # Double Chance
-            elif 'Double Chance' in market_name:
-                bookmaker_odds = odds_item.get('bookmaker', {})
-                if 'odds' in bookmaker_odds:
-                    odds_values = bookmaker_odds['odds']
-                    
-                    hd = next((o['value'] for o in odds_values if 'Home' in o['label'] and 'Draw' in o['label']), 0)
-                    ha = next((o['value'] for o in odds_values if 'Home' in o['label'] and 'Away' in o['label']), 0)
-                    da = next((o['value'] for o in odds_values if 'Draw' in o['label'] and 'Away' in o['label']), 0)
-                    
-                    if all([hd, ha, da]):
-                        result['Double Chance'] = {
-                            'odds': [float(hd), float(ha), float(da)],
-                            'selections': ['Home/Draw', 'Home/Away', 'Draw/Away']
-                        }
+            elif 'Double Chance' in market_name and not result.get('Double Chance'):
+                hd = next((o['value'] for o in odds_values if o['label'] == 'Home/Draw'), 0)
+                ha = next((o['value'] for o in odds_values if o['label'] == 'Home/Away'), 0)
+                da = next((o['value'] for o in odds_values if o['label'] == 'Draw/Away'), 0)
+                
+                if all([hd, ha, da]):
+                    result['Double Chance'] = {
+                        'odds': [float(hd), float(ha), float(da)],
+                        'selections': ['Home/Draw', 'Home/Away', 'Draw/Away']
+                    }
         
         return result
     
@@ -545,42 +641,33 @@ class SportmonksClient:
 # HAUPTSYSTEM
 # ==========================================================
 class SportmonksDutchingSystem:
+    # ... (Fast keine Änderungen hier, nutzt die neuen Klassen) ...
     def __init__(self, config: Config = None):
+        print("Initialisiere Dutching System...")
         self.config = config or Config()
         self.api_token = os.getenv("SPORTMONKS_API_TOKEN")
         
         if not self.api_token:
             print("❌ FEHLER: SPORTMONKS_API_TOKEN nicht in .env gefunden!")
-            print("\nBitte erstellen Sie eine .env Datei mit:")
-            print("SPORTMONKS_API_TOKEN=your_token_here")
             raise ValueError("API Token fehlt")
         
         self.client = SportmonksClient(self.api_token, self.config)
         self.analyzer = ComprehensiveAnalyzer(self.config)
         self.formatter = ResultFormatter()
         self.results = []
+        print("✅ Dutching System initialisiert.")
     
     def run(self):
         print("\n" + "="*70)
-        print("🚀 SPORTMONKS DUTCHING SYSTEM")
+        print("🚀 SPORTMONKS DUTCHING SYSTEM WIRD GESTARTET")
         print("="*70 + "\n")
         
-        # Berechne Datum-Range
-        now = dt.datetime.now(dt.UTC)
+        now = dt.datetime.now(dt.timezone.utc)
         date_from = now.strftime("%Y-%m-%d")
         date_to = (now + dt.timedelta(days=14)).strftime("%Y-%m-%d")
         
-        # Top Europäische Ligen (Sportmonks League IDs)
         league_ids = [
-            8,      # Premier League
-            82,     # Bundesliga
-            564,    # La Liga
-            384,    # Serie A
-            301,    # Ligue 1
-            72,     # Eredivisie
-            271,    # Primeira Liga
-            2,      # Championship
-            1489    # Serie A Brasil (wenn verfügbar)
+            8, 82, 564, 384, 301, 72, 271, 2
         ]
         
         print(f"Suche Spiele von {date_from} bis {date_to}...")
@@ -595,7 +682,6 @@ class SportmonksDutchingSystem:
         
         print(f"✅ {len(fixtures)} Spiele gefunden\n")
         
-        # Zeige Verteilung
         league_counts = {}
         for f in fixtures:
             league = f.get('league', {}).get('name', 'Unknown')
@@ -614,7 +700,7 @@ class SportmonksDutchingSystem:
             
             odds_data = self.client.get_odds_for_fixture(fixture_id)
             
-            if odds_data.get('3Way Result'):
+            if odds_data.get('3Way Result'): # Analysiere nur wenn Hauptmarkt vorhanden
                 self.analyzer.matches_with_odds += 1
                 match_results = self.analyzer.analyze_match(fixture, odds_data)
                 if match_results:
@@ -669,5 +755,4 @@ if __name__ == "__main__":
         print("\n\n⚠️ Abgebrochen durch Benutzer")
     except Exception as e:
         print(f"\n\n❌ FEHLER: {e}")
-        import traceback
         traceback.print_exc()

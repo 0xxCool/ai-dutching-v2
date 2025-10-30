@@ -405,42 +405,43 @@ class ContinuousTrainingEngine:
         return model, val_acc
 
     def train_xgboost(
-        self,
-        X: np.ndarray,
-        y: np.ndarray
-    ) -> Tuple[GPUXGBoostPredictor, float]:
-        """Trainiere neues XGBoost Modell"""
-        print("\n🌲 Training XGBoost...")
+            self,
+            X: np.ndarray,
+            y: np.ndarray
+        ) -> Tuple[GPUXGBoostPredictor, float]:
+            """Trainiere neues XGBoost Modell"""
+            print("\n🌲 Training XGBoost...")
 
-        model = GPUXGBoostPredictor(use_gpu=True)
+            model = GPUXGBoostPredictor(use_gpu=True)
 
-        # Train/Val Split
-        val_size = int(len(X) * 0.2)
-        indices = np.random.permutation(len(X))
-        train_idx, val_idx = indices[val_size:], indices[:val_size]
+            # Train/Val Split
+            val_size = int(len(X) * 0.2)
+            indices = np.random.permutation(len(X))
+            train_idx, val_idx = indices[val_size:], indices[:val_size]
 
-        X_train, y_train = X[train_idx], y[train_idx]
-        X_val, y_val = X[val_idx], y[val_idx]
+            X_train, y_train = X[train_idx], y[train_idx]
+            X_val, y_val = X[val_idx], y[val_idx]
 
-        model.train(X_train, y_train, verbose=True)
+            model.train(X_train, y_train, verbose=True)
 
-        # Validation Accuracy
-        val_preds = model.predict_proba(X_val).argmax(axis=1)
-        val_acc = (val_preds == y_val).mean()
+            # Validation Accuracy
+            val_preds = model.model.predict_proba(X_val).argmax(axis=1) # Nutze model.model.predict_proba für Konsistenz
+            val_acc = (val_preds == y_val).mean()
 
-        print(f"✅ XGBoost Val Accuracy: {val_acc:.4f}")
+            print(f"✅ XGBoost Val Accuracy: {val_acc:.4f}")
 
-        # Save Model
-        model_dir = Path("models/xgboost")
-        model_dir.mkdir(parents=True, exist_ok=True)
+            # Save Model
+            model_dir = Path("models/xgboost")
+            model_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        model_path = model_dir / f"xgb_model_{timestamp}.pkl"
+            # === KORREKTUR HIER ===
+            # Speichere das Modell immer als 'latest.pkl', damit es gefunden wird.
+            model_path = model_dir / "latest.pkl"
 
-        with open(model_path, 'wb') as f:
-            pickle.dump(model.model, f)
+            with open(model_path, 'wb') as f:
+                pickle.dump(model.model, f)
 
-        return model, val_acc
+            return model, val_acc
 
     def ab_test_models(
         self,

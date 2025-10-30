@@ -307,8 +307,7 @@ class GPUNeuralNetworkPredictor:
             self.optimizer,
             mode='min',
             factor=0.5,
-            patience=5,
-            verbose=True
+            patience=5
         )
 
         # Loss
@@ -359,7 +358,7 @@ class GPUNeuralNetworkPredictor:
             train_dataset,
             batch_size=batch_size,
             shuffle=True,
-            pin_memory=self.config.pin_memory,
+            pin_memory=False,
             num_workers=0  # Windows kompatibel
         )
 
@@ -526,23 +525,22 @@ class GPUNeuralNetworkPredictor:
 class GPUXGBoostPredictor:
     """
     XGBoost mit GPU-Training (tree_method='gpu_hist')
-
-    Performance auf RTX 3090:
-    - 10-50x schneller als CPU
-    - Kann große Datasets effizient verarbeiten
+    Fällt automatisch auf CPU ('hist') zurück, falls GPU-Build fehlt.
     """
 
     def __init__(self, use_gpu: bool = True):
         if not XGBOOST_AVAILABLE:
             raise ImportError("XGBoost nicht installiert!")
 
-        # GPU-Parameter
-        tree_method = 'gpu_hist' if use_gpu and torch.cuda.is_available() else 'hist'
-
+        # Wir gehen optimistisch davon aus, dass die GPU funktioniert.
+        self.use_gpu = use_gpu and torch.cuda.is_available()
+        self.tree_method = 'gpu_hist' if self.use_gpu else 'hist'
+        self.predictor = 'gpu_predictor' if self.use_gpu else 'auto'
+        
         self.model = xgb.XGBClassifier(
             objective='multi:softprob',
             num_class=3,
-            tree_method=tree_method,  # GPU-Beschleunigung!
+            tree_method=self.tree_method,
             max_depth=8,
             learning_rate=0.05,
             n_estimators=300,
@@ -550,39 +548,72 @@ class GPUXGBoostPredictor:
             colsample_bytree=0.8,
             random_state=42,
             eval_metric='mlogloss',
-            # GPU-spezifisch
-            predictor='gpu_predictor' if use_gpu and torch.cuda.is_available() else 'auto',
-            max_bin=256  # Optimal für GPU
+            predictor=self.predictor,
+            max_bin=256
         )
-
         self.is_trained = False
-        self.use_gpu = use_gpu and torch.cuda.is_available()
 
         if self.use_gpu:
-            print("🚀 XGBoost GPU-Modus aktiviert!")
+            print("🚀 XGBoost GPU-Modus (Versuch wird gestartet)...")
         else:
-            print("⚠️  XGBoost CPU-Modus (GPU nicht verfügbar)")
+            print("ℹ️  XGBoost CPU-Modus.")
 
     def train(self, X: np.ndarray, y: np.ndarray, verbose: bool = True):
-        """
-        GPU-beschleunigtes Training
+            """
+            Trainiert das Modell (auf GPU oder CPU, je nach __init__)
+            """
+            if verbose:
+                print(f"\n🌲 XGBoost Training:")
+                print(f"   Samples: {len(X)}")
+                print(f"   Features: {X.shape[1]}")
+                print(f"   Methode (Versuch): {self.model.get_params()['tree_method']}")
 
-        Performance: 10-50x schneller vs CPU
-        """
-        if verbose:
-            print(f"\n🌲 XGBoost Training:")
-            print(f"   Samples: {len(X)}")
-            print(f"   Features: {X.shape[1]}")
-            print(f"   GPU: {self.use_gpu}")
+            try:
+                # === HAUPT-VERSUCH (GPU) ===
+                self.model.fit(X, y, verbose=verbose)
+                
+            # === KORREKTUR HIER: "xgboost." zu "xgb." geändert ===
+            except xgb.core.XGBoostError as e:
+                # === FEHLERBEHANDLUNG: FALLBACK AUF CPU ===
+                if "not compiled with GPU support" in str(e) or "Invalid Input: 'gpu_hist'" in str(e):
+                    print("\n" + "="*60)
+                    print("⚠️  WARNUNG: XGBoost GPU-Training fehlgeschlagen. Falle zurück auf CPU.")
+                    print(f"   Fehler: {e}")
+                    print("   Neuer Versuch mit tree_method='hist' (CPU)...")
+                    print("="*60 + "\n")
+                    
+                    # Setze auf CPU zurück und versuche es erneut
+                    self.use_gpu = False
+                    self.tree_method = 'hist'
+                    self.predictor = 'auto'
+                    
+                    self.model = xgb.XGBClassifier(
+                        objective='multi:softprob',
+                        num_class=3,
+                        tree_method=self.tree_method, # Jetzt 'hist'
+                        max_depth=8,
+                        learning_rate=0.05,
+                        n_estimators=300,
+                        subsample=0.8,
+                        colsample_bytree=0.8,
+                        random_state=42,
+                        eval_metric='mlogloss',
+                        predictor=self.predictor,
+                        max_bin=256
+                    )
+                    
+                    # Zweiter Versuch mit CPU
+                    self.model.fit(X, y, verbose=verbose)
+                else:
+                    # Wenn es ein anderer XGBoost-Fehler ist, wirf ihn
+                    raise e
 
-        self.model.fit(X, y, verbose=verbose)
-        self.is_trained = True
-
-        if verbose:
-            print("✅ XGBoost Training abgeschlossen!")
+            self.is_trained = True
+            if verbose:
+                print(f"✅ XGBoost Training abgeschlossen! (Finale Methode: {self.model.get_params()['tree_method']})")
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """GPU-beschleunigte Predictions"""
+        """Predictions"""
         if not self.is_trained:
             raise ValueError("Modell muss erst trainiert werden!")
 
@@ -603,10 +634,10 @@ class GPUXGBoostPredictor:
             'diff_xg_home', 'diff_xg_away', 'diff_goals_home', 'diff_goals_away',
             'diff_ppg', 'diff_wr', 'total_attack', 'total_defense'
         ]
-
-        return dict(zip(feature_names[:len(importance)], importance))
-
-
+        
+        min_len = min(len(feature_names), len(importance))
+        return dict(zip(feature_names[:min_len], importance[:min_len]))
+                
 # ==========================================================
 # EXAMPLE & TESTING
 # ==========================================================

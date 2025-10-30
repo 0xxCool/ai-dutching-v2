@@ -60,6 +60,9 @@ temp_*.csv
 .api_cache/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.env
 .cache/
 .pytest_cache/
 
@@ -68,11 +71,19 @@ __pycache__/
 logs/
 dutching.log
 
+# Kompilierte Artefakte (vom XGBoost-Build)
+xgboost/
+*.deb
+
+# Installations-Skripte
+*.sh
+
 # Results & Outputs
 *_results_*.csv
 backtest_results/
 *.pkl
 *.pth
+*.csv
 models/*.pth
 
 # Streamlit
