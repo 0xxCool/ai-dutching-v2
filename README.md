@@ -333,6 +333,58 @@ model = xgb.XGBClassifier(tree_method='gpu_hist')
 print("XGBoost mit 'gpu_hist' erfolgreich geladen!")
 exit()
 Wenn diese Befehle ohne den Invalid Input-Fehler durchlaufen, war die Installation erfolgreich.
+
+SOLLTE DAS ACUCH NICHT KLAPPEN, dann so vorgehen:
+
+Installationsanleitung: Mamba-Umgebung für KI-Projekte (WSL)
+Hier ist die schrittweise Anleitung zur Einrichtung einer sauberen, isolierten Python-Umgebung in WSL, die CUDA, PyTorch und GPU-fähiges XGBoost enthält.
+
+1. Mamba (Miniforge) installieren
+Mamba ist ein schneller, paralleler Paketmanager, der Conda verwendet.
+
+Bash
+
+# 1. Den Miniforge3-Installer (enthält Mamba) herunterladen
+wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+
+# 2. Den Installer ausführen
+bash Miniforge3-Linux-x86_64.sh
+Folge den Anweisungen auf dem Bildschirm.
+
+Akzeptiere die Lizenzbedingungen (drücke Enter und tippe yes).
+
+WICHTIG: Wenn du gefragt wirst: Do you wish the installer to initialize Miniforge3 by running conda init? [yes|no], tippe yes und drücke Enter.
+
+2. Terminal neu starten
+Schließe dein aktuelles WSL-Terminal vollständig und öffne ein neues. Dein Prompt sollte jetzt (base) anzeigen, was bedeutet, dass Mamba/Conda aktiv ist.
+
+3. Projekt-Umgebung erstellen
+Erstelle eine dedizierte Umgebung für das Projekt (wir nennen sie ai-dutching), um Konflikte mit anderen Paketen zu vermeiden.
+
+Bash
+
+# 1. Umgebung mit Python 3.10 erstellen
+mamba create -n ai-dutching python=3.10
+
+# 2. Die neue Umgebung aktivieren
+mamba activate ai-dutching
+Dein Prompt sollte jetzt zu (ai-dutching) wechseln.
+
+4. Alle Abhängigkeiten (inkl. GPU-Support) installieren
+Dies ist der wichtigste Befehl. Er installiert PyTorch, das CUDA-Toolkit (Version 11.8, passend zu deinem PyTorch-Build) und die GPU-Version von XGBoost – alles aus Kanälen, die Kompatibilität garantieren.
+
+Bash
+
+mamba install -c pytorch -c nvidia -c conda-forge \
+pytorch torchvision cudatoolkit=11.8 \
+xgboost pandas streamlit scipy pynvml python-dotenv tqdm
+5. (Optional) Vorhandene Installationen bereinigen
+Falls du noch Reste von pip-Installationen hast, die stören könnten (besonders das alte XGBoost), kannst du sie aus der alten Umgebung entfernen:
+
+Bash
+
+# (Nur falls noch nicht geschehen)
+pip uninstall xgboost
 ```
 
 ### Schritt 4: Verifikation
@@ -1595,6 +1647,7 @@ Verification Score:   100%
 🤝 **Want to contribute?** → Submit a PR
 
 **Happy Betting! 🎯💰**
+
 
 
 
