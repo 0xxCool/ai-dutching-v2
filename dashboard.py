@@ -1,5 +1,5 @@
 """
-🚀 AI DUTCHING SYSTEM - COMPLETE GPU DASHBOARD
+⚽ AI DUTCHING SYSTEM - COMPLETE GPU DASHBOARD
 ================================================
 
 Features:
@@ -33,49 +33,93 @@ import time # Hinzugefügt für Live-Updates
 # Page Config
 st.set_page_config(
     page_title="AI Dutching System v3.1 GPU",
-    page_icon="🚀",
+    page_icon="⚽",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS (Dark-Mode optimiert mit "Fussball-Grün")
 st.markdown("""
 <style>
+    /* ----- HINTERGRUNDBILD ----- */
+    [data-testid="stAppViewContainer"] {
+        /* Dunkler Farbverlauf (Overlay) */
+        background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                          
+                          /* URL zum Hintergrundbild (Stadion) */
+                          url("https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1920&q=80");
+        
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+    
+    /* ----- Transparenz für Hauptinhalt ----- */
+    /* Macht den Haupt-Content-Block leicht durchsichtig, damit das Bild durchscheint */
+    [data-testid="block-container"] {
+        background-color: rgba(14, 17, 23, 0.85); /* 85% Deckkraft von stApp-Hintergrund */
+        border-radius: 0.5rem;
+        padding: 2rem;
+    }
+
+    /* ----- Transparenz für Sidebar ----- */
+    [data-testid="stSidebar"] {
+        background-color: rgba(26, 26, 31, 0.85); /* 85% Deckkraft von Sidebar-Hintergrund */
+    }
+            
+    /* ----- Basis-Layout ----- */
+    /* Haupt-Hintergrund (Streamlit Dark) */
+    [data-testid="stAppViewContainer"] {
+        background-color: #0e1117;
+    }
+
+    /* Sidebar-Hintergrund */
+    [data-testid="stSidebar"] {
+        background-color: #1a1a1f; /* Etwas helleres Dunkelgrau */
+    }
+
+    /* ----- Überschriften ----- */
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
-        background: linear-gradient(90deg, #1f77b4, #00cc00);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #FFFFFF; /* Weiß im Dark-Mode */
         text-align: center;
         margin-bottom: 2rem;
     }
+
     .sub-header {
         font-size: 1.5rem;
         font-weight: bold;
-        color: #1f77b4;
+        color: #4CAF50; /* Fussball-Grün Akzent */
         margin-top: 1rem;
     }
+
+    /* ----- Karten-Styling ----- */
     .metric-card {
-        background-color: #f0f2f6;
+        background-color: #1a1a1f; /* Dunkler Kartenhintergrund */
         padding: 1rem;
         border-radius: 0.5rem;
         margin: 0.5rem 0;
-        border-left: 4px solid #1f77b4;
+        border-left: 4px solid #4CAF50; /* Grüner Rand */
     }
+
     .gpu-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Modernerer Gradient (Grün/Blau) */
+        background: linear-gradient(135deg, #4CAF50 0%, #1f77b4 100%);
         color: white;
         padding: 1.5rem;
         border-radius: 0.5rem;
         margin: 0.5rem 0;
     }
+
+    /* ----- Text-Akzente ----- */
     .profit {
-        color: #00cc00;
+        color: #00cc00; /* Helles Grün für Profit */
         font-weight: bold;
     }
     .loss {
-        color: #ff0000;
+        color: #ff4b4b; /* Helles Rot für Verlust */
         font-weight: bold;
     }
     .status-ok {
@@ -87,20 +131,30 @@ st.markdown("""
         font-weight: bold;
     }
     .status-error {
-        color: #ff0000;
+        color: #ff4b4b;
         font-weight: bold;
     }
-    /* Style für das Log-Fenster */
-    .log-container {
-        background-color: #002b36; /* Solarized Dark */
-        color: #93a1a1;
-        font-family: 'Courier New', Courier, monospace;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        height: 400px;
-        overflow-y: scroll;
-        border: 1px solid #586e75;
+    
+    /* ----- Sliders & Knöpfe (Grün-Akzent) ----- */
+    
+    /* Slider-Leiste */
+    div[data-testid="stSlider"] > div[data-baseweb="slider"] > div:nth-child(2) > div {
+        background: #4CAF50 !important;
     }
+    /* Slider-Punkt */
+    div[data-testid="stSlider"] > div[data-baseweb="slider"] > div:nth-child(3) {
+        background-color: #4CAF50 !important;
+    }
+    
+    /* Checkbox */
+    div[data-testid="stCheckbox"] span {
+        border-color: #4CAF50 !important;
+    }
+    div[data-testid="stCheckbox"] input:checked + div[data-baseweb="checkbox"] > span {
+         background-color: #4CAF50 !important;
+         border-color: #4CAF50 !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -257,7 +311,7 @@ def read_log_file(log_path: str) -> str:
 # SIDEBAR NAVIGATION
 # ==========================================================
 
-st.sidebar.markdown("# 🚀 AI Dutching v3.1")
+st.sidebar.markdown("# ⚽ AI Dutching v3.1")
 st.sidebar.markdown("**GPU Edition**")
 st.sidebar.markdown("---")
 
@@ -351,7 +405,7 @@ if st.sidebar.button("⚡ Run Dutching System"):
 # ==========================================================
 
 if page == "📊 Dashboard":
-    st.markdown('<div class="main-header">🚀 AI Dutching System Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">⚽ AI Dutching System Dashboard</div>', unsafe_allow_html=True)
 
     # Load data
     df_bets = load_historical_bets()
