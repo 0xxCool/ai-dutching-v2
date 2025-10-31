@@ -1,1653 +1,1549 @@
-# 🚀 AI Dutching System v3.1 - GPU EDITION
+# ⚽ AI Dutching System v3.1
 
-**Enterprise-Grade Sports Betting System mit GPU-beschleunigter KI für RTX 3090**
+**A Complete Machine Learning System for Profitable Sports Betting**
 
-[![Verification](https://img.shields.io/badge/verification-100%25-brightgreen)](https://github.com)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
-[![CUDA](https://img.shields.io/badge/CUDA-12.1-76B900.svg)](https://developer.nvidia.com/cuda-toolkit)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red)](https://pytorch.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/0xxCool/ai-dutching-v1)
 
----
-
-## 📋 INHALTSVERZEICHNIS
-
-1. [Überblick](#-überblick)
-2. [System-Features](#-system-features)
-3. [Performance-Metriken](#-performance-metriken)
-4. [GPU-Beschleunigung](#-gpu-beschleunigung)
-5. [Installation](#-installation)
-6. [Konfiguration](#-konfiguration)
-7. [Quick Start](#-quick-start)
-8. [Dashboard](#-dashboard)
-9. [Module-Dokumentation](#-module-dokumentation)
-10. [API-Dokumentation](#-api-dokumentation)
-11. [Erweiterte Features](#-erweiterte-features)
-12. [Troubleshooting](#-troubleshooting)
-13. [Contributing](#-contributing)
-14. [License](#-license)
+> **Production-Ready ML System für profitable Fußballwetten mit GPU-Beschleunigung, Ensemble-Predictions und vollständigem Risk Management**
 
 ---
 
-## 🎯 ÜBERBLICK
+## 📋 Inhaltsverzeichnis
 
-Das **AI Dutching System v3.1 GPU Edition** ist ein hochentwickeltes, GPU-beschleunigtes Wettsystem für Sportswetten, das Machine Learning, Deep Reinforcement Learning und mathematische Modelle kombiniert, um optimale Wett-Entscheidungen zu treffen.
-
-### 🌟 Was macht dieses System besonders?
-
-- **🎮 GPU-Beschleunigung**: 10-100x schneller durch RTX 3090 Optimierung
-- **🧠 Hybrid ML Ensemble**: Kombiniert Poisson, XGBoost und Neural Networks
-- **🔄 Continuous Learning**: System lernt kontinuierlich aus neuen Daten
-- **💵 AI Cashout Optimizer**: Deep RL für optimale Cashout-Entscheidungen
-- **📊 Professional Dashboard**: Streamlit-basiertes Web-Interface
-- **⚡ Hochperformant**: 15x schnellere Berechnungen durch Numpy Vectorization
+- [Überblick](#überblick)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [System-Architektur](#system-architektur)
+- [Komponenten](#komponenten)
+- [Installation](#installation)
+- [Konfiguration](#konfiguration)
+- [Datenerfassung](#datenerfassung)
+- [ML-Training](#ml-training)
+- [Betting-Systeme](#betting-systeme)
+- [Risk Management](#risk-management)
+- [Dashboard](#dashboard)
+- [Workflows](#workflows)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
+- [Best Practices](#best-practices)
+- [FAQ](#faq)
+- [Disclaimer](#disclaimer)
 
 ---
 
-## 🌟 SYSTEM-FEATURES
+## 🎯 Überblick
 
-### Core Features (v3.1)
+Das **AI Dutching System v3.1** ist ein vollständig integriertes, production-ready System für profitable Sportwetten. Es kombiniert modernste Machine Learning Techniken mit solidem Risk Management.
 
-#### 1. **GPU-Beschleunigtes Training**
-- PyTorch CUDA Neural Networks mit Mixed Precision (FP16)
-- XGBoost GPU Training (10-50x Speedup)
-- Automatic GPU Detection (RTX 3090, RTX 3080, etc.)
-- Optimal Batch Sizes für verschiedene GPU-Größen
-- Memory-efficient Training
+### Was macht dieses System besonders?
 
-#### 2. **Continuous Learning System**
-- Automatisches Retraining bei neuen Daten
+**1. Hybrid-Datenerfassung**
+- Löst das fundamentale Problem fehlender historischer Quoten
+- Kombiniert Sportmonks API (xG-Daten) + Football-Data.co.uk (historische Quoten)
+- 95% API-Effizienz (24 Calls statt 1000+)
+
+**2. Ensemble Machine Learning**
+- 3 Modelle kombiniert: Poisson + Neural Network + XGBoost
+- ~63% Accuracy (90% über Baseline!)
+- GPU-optimiert für RTX 3090 (Training in 3-5 Minuten)
+
+**3. Professionelles Risk Management**
+- Portfolio-basierte Allokation
+- Exposure Limits (30% pro Market/Liga, 10% pro Match)
+- Kelly-Criterion Staking mit Caps
+- VaR-Berechnung
+
+**4. Vollständige Integration**
+- Alle Komponenten arbeiten nahtlos zusammen
+- Zentrale Konfiguration (unified_config)
+- Live Dashboard mit Monitoring
+- Multi-Channel Alerts (Telegram, Discord, Email)
+
+**5. Production-Ready**
+- Getestet und validiert
+- Comprehensive Error Handling
+- API-Caching (70-80% weniger Calls)
+- Continuous Training Support
+
+---
+
+## ✨ Features
+
+### Core Features
+
+✅ **Datenerfassung**
+- Hybrid-Scraper v3.0 (xG + Odds)
+- Correct Score Datenbank
+- API-Caching System
+- ~1800 Spiele verfügbar
+
+✅ **Machine Learning**
+- Neural Network (PyTorch, GPU-optimiert)
+- XGBoost (GPU-beschleunigt)
+- Poisson Statistical Model
+- Ensemble-Predictions (63% Accuracy)
+- Automatisches Feature Engineering (20 Features)
 - Model Registry mit Versioning
-- A/B Testing Framework
-- Champion Model Selection
-- Performance Tracking über Zeit
 
-#### 3. **Advanced Deep RL Cashout**
-- Dueling DQN Architektur
-- Prioritized Experience Replay
-- Noisy Networks (parametric exploration)
-- Double DQN mit Target Network
-- 25-40% ROI-Steigerung
+✅ **Betting-Systeme**
+- Dutching System (1X2, Over/Under, BTTS)
+- Correct Score System
+- Value Bet Detection (EV > 10%)
+- Kelly-Criterion Staking
 
-#### 4. **GPU Performance Monitoring**
-- NVML Integration (nvidia-ml-py3)
-- Echtzeit Temperatur/VRAM/Power Tracking
-- Training Performance Metriken
-- Automatische Health Checks
-- Performance History Tracking
+✅ **Risk Management**
+- Portfolio Manager (Diversifikation, Exposure Limits)
+- Cashout Optimizer (Deep RL)
+- Backtesting Framework
+- VaR & Sharpe Ratio Tracking
 
-#### 5. **Professional Web Dashboard**
-- 7 Hauptseiten (Dashboard, Live Bets, Analytics, GPU Control, ML Models, Performance Monitor, Settings)
-- Real-time GPU Monitoring
-- Interactive Training Controls
-- Model Performance Comparison
-- Comprehensive System Configuration
+✅ **Monitoring & Alerts**
+- Multi-Channel Alerts (Telegram, Discord, Email)
+- GPU Performance Monitor
+- Live Dashboard (Streamlit)
+- System Health Tracking
+
+✅ **Konfiguration**
+- Unified Configuration System
+- Zentrale Einstellungen für alle 13 Komponenten
+- Speichern/Laden via config.json
+- CLI Interface
 
 ### Advanced Features
 
-#### 6. **Hybrid ML Ensemble**
-- **Poisson Model** (40%): Mathematische Baseline
-- **XGBoost** (35%): Feature-basiertes Learning
-- **Neural Network** (25%): Deep Learning
-- Automatische Gewichtungs-Optimierung
-- 62-68% Prediction Accuracy
+🚀 **GPU-Beschleunigung**
+- Mixed Precision Training (FP16)
+- RTX 3090 Support (24GB VRAM)
+- 10-40x schneller als CPU
+- GPU Health Monitoring
 
-#### 7. **Portfolio Management**
-- Risk-Parity Allocation
-- Correlation Analysis
-- Automatic Exposure Limits
-- Diversification Enforcement
-- VaR (Value-at-Risk) Calculation
+🚀 **Continuous Training**
+- Automatisches Retraining bei neuen Daten
+- Champion-Model Selection
+- A/B Testing Support
+- Performance Tracking
 
-#### 8. **Multi-Channel Alerts**
-- Telegram Bot Integration
-- Discord Webhooks
-- Email Notifications
-- Console Output
-- Configurable Alert Levels
+🚀 **Deep Reinforcement Learning**
+- DQN für Cashout-Optimization
+- Live Monitoring aktiver Wetten
+- Min Profit Threshold: 10%
+- Max Loss Threshold: -50%
 
-#### 9. **API Caching System**
-- 70-80% API Call Reduction
+🚀 **API-Optimierung**
 - File-based Caching
-- Redis Support (optional)
-- Intelligent TTL Management
-- Automatic Cache Invalidation
-
-#### 10. **Backtesting Framework**
-- Historical Simulation
-- Sharpe Ratio Calculation
-- Maximum Drawdown Analysis
-- Win Rate Statistics
-- ROI Tracking
+- TTL pro Endpoint-Typ
+- 70-80% weniger API-Calls
+- Offline-Testing möglich
 
 ---
 
-## 📊 PERFORMANCE-METRIKEN
+## 🚀 Quick Start
 
-### System Performance (v3.1 vs v3.0 vs v1.0)
+### Prerequisites
 
-| Metrik | v1.0 (Baseline) | v3.0 (CPU) | v3.1 (GPU) | Verbesserung |
-|--------|-----------------|------------|------------|--------------|
-| **Prediction Accuracy** | 45-50% | 62-68% | **62-68%** | **+17-23%** |
-| **ROI** | 15-25% | 40-60% | **45-70%** | **+30-55%** |
-| **Sharpe Ratio** | 1.2 | 2.5-3.2 | **3.0-3.8** | **+150-216%** |
-| **Max Drawdown** | 20-25% | 8-12% | **6-10%** | **-70%** |
-| **Win Rate** | 42-46% | 52-58% | **55-62%** | **+13-20%** |
-| **Training Time** | N/A | **Stunden** | **Minuten** | **-95%** |
+- Python 3.10+
+- (Optional) NVIDIA GPU mit CUDA 11.8+ für GPU-Beschleunigung
+- Sportmonks API Token (https://www.sportmonks.com/)
 
-### Mit Cashout-Optimizer
-
-| Metrik | Ohne Cashout | Mit Cashout (Heuristic) | Mit Deep RL | Verbesserung |
-|--------|--------------|-------------------------|-------------|--------------|
-| **ROI** | 40-60% | 55-75% | **65-95%** | **+25-35%** |
-| **Max Drawdown** | 8-12% | 5-8% | **4-6%** | **-50%** |
-| **Risk-Adjusted Return** | Baseline | +35% | **+60%** | **+60%** |
-
----
-
-## ⚡ GPU-BESCHLEUNIGUNG
-
-### 🚀 RTX 3090 Optimierungen
-
-Das System nutzt die volle Power der Nvidia RTX 3090 (24GB VRAM, 10496 CUDA Cores):
-
-#### Performance-Vergleich: CPU vs RTX 3090
-
-| Operation | CPU | RTX 3090 (FP32) | RTX 3090 (FP16) | Speedup |
-|-----------|-----|-----------------|-----------------|---------|
-| **Neural Network Training** | 100-200 samples/sec | 1,000-2,000 samples/sec | **2,000-4,000 samples/sec** | **20-40x** ⚡ |
-| **XGBoost Training** | Baseline | **10-50x schneller** | - | **10-50x** ⚡ |
-| **Deep RL (DQN)** | 50-100 steps/sec | 1,000-3,000 steps/sec | **2,000-5,000 steps/sec** | **40-100x** ⚡ |
-| **Batch Inference** | Baseline | **100-500x schneller** | - | **100-500x** ⚡ |
-| **Poisson Calculations** | 0.15ms/match | 0.01ms/match | **0.008ms/match** | **19x** ⚡ |
-
-#### VRAM-Nutzung (RTX 3090 - 24GB)
-
-```
-Neural Network:     ~500-2,000 MB     (2-8%)
-XGBoost:           ~1,000-3,000 MB    (4-12%)
-Deep RL DQN:       ~1,000-4,000 MB    (4-16%)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Gesamt:            ~5-10 GB           (20-40%)
-Reserve:           14-19 GB           (60-80%) ✅
-```
-
-**→ Genug Reserve für massive Batches und Multi-Modell Training!**
-
-### Mixed Precision Training (FP16)
-
-- **Automatic Mixed Precision (AMP)**: PyTorch natives AMP
-- **Tensor Cores**: RTX 3090 Tensor Cores für 2-3x zusätzlichen Speedup
-- **Gradient Scaling**: Automatische Stabilisierung
-- **Memory Savings**: 50% weniger VRAM-Nutzung
-- **Quality**: Keine Accuracy-Einbußen
-
-### GPU-Monitoring
-
-```python
-# Echtzeit GPU-Metriken
-GPU Utilization:  85%
-VRAM Usage:       6.2GB / 24.0GB  (26%)
-Temperature:      72°C  (Safe: < 85°C)
-Power Draw:       285W  (TDP: 350W)
-SM Clock:         1,875 MHz
-Memory Clock:     9,751 MHz
-```
-
----
-
-## 💻 INSTALLATION
-
-### Voraussetzungen
-
-**Hardware:**
-- **GPU**: Nvidia RTX 3090 (empfohlen) oder RTX 3080/3070/2080 Ti (kompatibel)
-- **RAM**: 16GB+ (32GB empfohlen)
-- **Storage**: 10GB+ freier Speicherplatz
-
-**Software:**
-- **OS**: Windows 10/11, Windows Server 2019/2022, Linux (Ubuntu 20.04+)
-- **Python**: 3.10 oder 3.11 (64-bit)
-- **CUDA**: 12.1 oder 11.8
-- **cuDNN**: 8.x
-
-### Schritt 1: Repository Klonen
+### Installation (5 Minuten)
 
 ```bash
+# 1. Repository klonen
 git clone https://github.com/0xxCool/ai-dutching-v1.git
 cd ai-dutching-v1
+
+# 2. Dependencies installieren
+pip install -r requirements.txt
+
+# 3. GPU Support (Optional, aber empfohlen)
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+# 4. Konfiguration erstellen
+cp .env.example .env
+# Bearbeite .env und trage ein:
+# SPORTMONKS_API_TOKEN=dein_token_hier
+
+# 5. Konfiguration validieren
+python unified_config.py --validate
 ```
 
-### Schritt 2: CUDA Toolkit Installieren (für GPU)
+### Erster Lauf (15-30 Minuten)
 
-#### Windows:
-1. Download CUDA Toolkit: https://developer.nvidia.com/cuda-downloads
-2. Wähle: Windows → x86_64 → 10/11 → exe (network)
-3. Installiere CUDA Toolkit + cuDNN
-4. Verifiziere Installation:
-   ```cmd
-   nvcc --version
-   ```
-
-#### Linux:
 ```bash
-# Ubuntu/Debian
-wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
-sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
-wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt-get update
-sudo apt-get -y install cuda
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-sudo apt install nvidia-cuda-toolkit
+# SCHRITT 1: Daten sammeln (~5 Minuten)
+python sportmonks_hybrid_scraper_v3_FINAL.py
+# → Output: game_database_complete.csv (~1800 Spiele)
 
+# SCHRITT 2: ML-Modelle trainieren (~5 Minuten mit GPU, ~20 Minuten mit CPU)
+python train_ml_models.py
+# → Output: models/neural_net_*.pth, models/xgboost_*.pkl
 
-# Verifiziere
-nvcc --version
-nvidia-smi
+# SCHRITT 3: Profitable Wetten finden (~10 Minuten)
+python sportmonks_dutching_system.py
+# → Output: results/sportmonks_results_*.csv
+
+# SCHRITT 4: Dashboard starten
+streamlit run dashboard.py
+# → Öffnet: http://localhost:8501
 ```
 
-### Schritt 3: Python Dependencies
+**Gratuliere! Das System läuft!** 🎉
 
-#### Option A: CPU-Version (Basic)
+---
+
+## 🏗️ System-Architektur
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│          UNIFIED CONFIGURATION SYSTEM                       │
+│          (unified_config.py)                                │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+      ┌──────────┴──────────────────────┐
+      │                                 │
+┌─────▼──────────────────────┐  ┌──────▼─────────────────────┐
+│   DATA COLLECTION          │  │   DASHBOARD & UI           │
+├────────────────────────────┤  ├────────────────────────────┤
+│ • Hybrid Scraper v3.0      │  │ • Streamlit Dashboard      │
+│ • Correct Score Scraper    │  │ • Live Monitoring          │
+│ • API Cache System         │  │ • System Control           │
+└────────────┬───────────────┘  └────────────────────────────┘
+             │
+      ┌──────┴──────────────────────┐
+      │                             │
+┌─────▼─────────────┐    ┌─────────▼──────────────┐
+│  ML TRAINING      │    │  BETTING SYSTEMS       │
+├───────────────────┤    ├────────────────────────┤
+│ • Neural Network  │    │ • Dutching System      │
+│ • XGBoost         │    │ • Correct Score System │
+│ • Poisson Model   │    │ • Ensemble Predictions │
+│ • Cont. Training  │    │ • Live Odds Monitoring │
+└─────┬─────────────┘    └────────┬───────────────┘
+      │                            │
+      └──────────┬─────────────────┘
+                 │
+      ┌──────────▼──────────────────────┐
+      │                                 │
+┌─────▼───────────────┐   ┌─────────▼──────────────┐
+│  RISK MANAGEMENT    │   │  OPTIMIZATION          │
+├─────────────────────┤   ├────────────────────────┤
+│ • Portfolio Manager │   │ • Cashout Optimizer    │
+│ • Exposure Limits   │   │ • Deep RL Cashout      │
+│ • Diversification   │   │ • Kelly Criterion      │
+│ • VaR Calculation   │   │ • Backtesting          │
+└─────────┬───────────┘   └────────┬───────────────┘
+          │                        │
+          └──────────┬─────────────┘
+                     │
+          ┌──────────▼───────────────┐
+          │  MONITORING & ALERTS     │
+          ├──────────────────────────┤
+          │ • Alert System           │
+          │ • GPU Monitor            │
+          │ • Performance Tracking   │
+          │ • Telegram/Discord       │
+          └──────────────────────────┘
+```
+
+---
+
+## 📦 Komponenten
+
+### 1. Data Collection (Datenerfassung)
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Hybrid Scraper** | `sportmonks_hybrid_scraper_v3_FINAL.py` | Sammelt xG (Sportmonks) + Quoten (Football-Data.co.uk) |
+| **Correct Score Scraper** | `sportmonks_correct_score_scraper.py` | Sammelt Correct Score Daten & Quoten |
+| **API Cache** | `api_cache_system.py` | Cached API-Responses, 70-80% weniger Calls |
+
+**Output:**
+- `game_database_complete.csv` (~1800 Spiele mit xG + Odds)
+- `correct_score_database.csv`
+
+### 2. ML Training (Machine Learning)
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Training Pipeline** | `train_ml_models.py` | Trainiert Neural Network + XGBoost |
+| **GPU ML Models** | `gpu_ml_models.py` | GPU-optimierte Modelle (RTX 3090) |
+| **Poisson Model** | `optimized_poisson_model.py` | Statistisches Basis-Modell |
+| **Continuous Training** | `continuous_training_system.py` | Automatisches Retraining |
+
+**Output:**
+- `models/neural_net_*.pth` (Val Acc: ~61%)
+- `models/xgboost_*.pkl` (Val Acc: ~62%)
+- `models/registry/model_registry.json`
+
+### 3. Betting Systems (Wettsysteme)
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Dutching System** | `sportmonks_dutching_system.py` | Findet profitable Wetten (1X2, O/U, BTTS) |
+| **Correct Score System** | `sportmonks_correct_score_system.py` | Correct Score Predictions & Betting |
+
+**Output:**
+- `results/sportmonks_results_*.csv`
+- `results/correct_score_results_*.csv`
+
+### 4. Risk Management (Risikomanagement)
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Portfolio Manager** | `portfolio_manager.py` | Optimale Allokation, Diversifikation |
+| **Cashout Optimizer** | `cashout_optimizer.py` | Optimaler Cashout-Zeitpunkt |
+| **Deep RL Cashout** | `gpu_deep_rl_cashout.py` | Deep Reinforcement Learning für Cashout |
+| **Backtesting** | `backtesting_framework.py` | Historisches Backtesting |
+
+### 5. Monitoring & Alerts (Überwachung)
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Alert System** | `alert_system.py` | Multi-Channel Alerts (Telegram, Discord, Email) |
+| **GPU Monitor** | `gpu_performance_monitor.py` | GPU Performance & Health Monitoring |
+
+### 6. Configuration & Dashboard
+
+| Komponente | Datei | Funktion |
+|------------|-------|----------|
+| **Unified Config** | `unified_config.py` | Zentrale Konfiguration für alle Komponenten |
+| **Dashboard** | `dashboard.py` | Streamlit Dashboard (Live Monitoring) |
+
+---
+
+## 💾 Installation
+
+### Detaillierte Installation
+
+#### 1. System-Anforderungen
+
+**Minimum:**
+- CPU: 8+ Cores
+- RAM: 8GB
+- Python: 3.10+
+- Storage: 1GB
+
+**Empfohlen:**
+- GPU: NVIDIA RTX 3090 (24GB VRAM)
+- RAM: 16GB+
+- CUDA: 11.8+ oder 12.1
+- Storage: 2GB
+
+#### 2. Python-Dependencies
 
 ```bash
 # Core Dependencies
 pip install pandas numpy scipy requests python-dotenv tqdm pyyaml
 
+# Machine Learning
+pip install scikit-learn xgboost
+
+# Deep Learning (PyTorch mit CUDA)
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
 # Dashboard
 pip install streamlit plotly matplotlib seaborn
 
-# Optional ML (ohne GPU)
-pip install scikit-learn
+# Optional (für erweiterte Features)
+pip install redis psycopg2-binary python-telegram-bot discord-webhook
 ```
 
-#### Option B: Full GPU-Version (Empfohlen)
-
+**Oder alles auf einmal:**
 ```bash
-# 1. PyTorch mit CUDA 12.1 (für RTX 3090)
+pip install -r requirements.txt
+```
+
+#### 3. GPU-Setup (Optional aber empfohlen)
+
+**NVIDIA CUDA Toolkit:**
+1. Download: https://developer.nvidia.com/cuda-downloads
+2. Installiere CUDA 12.1 oder CUDA 11.8
+3. Installiere cuDNN 8.x
+
+**PyTorch mit CUDA:**
+```bash
+# Für CUDA 12.1 (Empfohlen)
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 
-# Oder CUDA 11.8
+# Für CUDA 11.8
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-
-# 2. Alle Dependencies
-pip install -r requirements.txt
-
-# 3. GPU Monitoring
-pip install nvidia-ml-py3
-
-# 4. Optional: XGBoost mit GPU
-pip install xgboost
-
-#5. XGBoost mit GPU-Support (gpu_hist) in WSL installieren
-Hier ist die Schritt-für-Schritt-Anleitung, um XGBoost aus dem Quellcode zu kompilieren. Dies ist die zuverlässigste Methode, um sicherzustellen, dass es deine CUDA 11.8-Installation findet.
-Führe diese Befehle nacheinander in deinem WSL-Terminal aus:
-
-Schritt 1: Vorbereitungen (Abhängigkeiten & Aufräumen)
-Altes XGBoost deinstallieren: (Sehr wichtig!)
-
-pip uninstall xgboost
-Build-Werkzeuge installieren: (Falls noch nicht geschehen)
-
-sudo apt-get update
-sudo apt-get install -y build-essential cmake git
-CUDA Toolkit verifizieren: (Wir müssen sicherstellen, dass nvcc, der CUDA-Compiler, vorhanden ist.)
-
-nvcc --version
-Wenn dies funktioniert (und idealerweise Version 11.8 anzeigt), super! Gehe zu Schritt 4.
-Wenn der Befehl nvcc nicht gefunden wird, musst du das CUDA-Toolkit innerhalb von WSL installieren (passend zu deinem PyTorch 11.8):
-
-sudo apt-get install -y cuda-toolkit-11-8
-Schritt 2: XGBoost aus dem Quellcode kompilieren
-Quellcode herunterladen:
-
-git clone --recursive https://github.com/dmlc/xgboost
-Build-Ordner erstellen:
-
-cd xgboost
-mkdir build
-cd build
-Kompilierung konfigurieren (Der wichtigste Befehl!): Dieser Befehl sucht nach CUDA und aktiviert das GPU-Plugin.
-
-cmake .. -DPLUGIN_CUDA=ON
-(Du solltest in der Ausgabe sehen, dass er CUDA findet.)
-
-Kompilieren: (Das wird einige Minuten dauern. $(nproc) nutzt alle deine CPU-Kerne.)
-
-make -j$(nproc)
-Python-Paket installieren: Nachdem die Kompilierung fertig ist, installiere das Paket mit pip.
-
-cd ../python-package
-pip install .
-Schritt 3: Validierung
-Nach der Installation kannst du sofort testen, ob es funktioniert hat:
-
-Starte Python:
-python3
-
-Importiere XGBoost und erstelle einen Classifier mit gpu_hist:
-
-import xgboost as xgb
-model = xgb.XGBClassifier(tree_method='gpu_hist')
-print("XGBoost mit 'gpu_hist' erfolgreich geladen!")
-exit()
-Wenn diese Befehle ohne den Invalid Input-Fehler durchlaufen, war die Installation erfolgreich.
-
-SOLLTE DAS ACUCH NICHT KLAPPEN, dann so vorgehen:
-
-Installationsanleitung: Mamba-Umgebung für KI-Projekte (WSL)
-Hier ist die schrittweise Anleitung zur Einrichtung einer sauberen, isolierten Python-Umgebung in WSL, die CUDA, PyTorch und GPU-fähiges XGBoost enthält.
-
-1. Mamba (Miniforge) installieren
-Mamba ist ein schneller, paralleler Paketmanager, der Conda verwendet.
-
-Bash
-
-# 1. Den Miniforge3-Installer (enthält Mamba) herunterladen
-wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
-
-# 2. Den Installer ausführen
-bash Miniforge3-Linux-x86_64.sh
-Folge den Anweisungen auf dem Bildschirm.
-
-Akzeptiere die Lizenzbedingungen (drücke Enter und tippe yes).
-
-WICHTIG: Wenn du gefragt wirst: Do you wish the installer to initialize Miniforge3 by running conda init? [yes|no], tippe yes und drücke Enter.
-
-2. Terminal neu starten
-Schließe dein aktuelles WSL-Terminal vollständig und öffne ein neues. Dein Prompt sollte jetzt (base) anzeigen, was bedeutet, dass Mamba/Conda aktiv ist.
-
-3. Projekt-Umgebung erstellen
-Erstelle eine dedizierte Umgebung für das Projekt (wir nennen sie ai-dutching), um Konflikte mit anderen Paketen zu vermeiden.
-
-Bash
-
-# 1. Umgebung mit Python 3.10 erstellen
-mamba create -n ai-dutching python=3.10
-
-# 2. Die neue Umgebung aktivieren
-mamba activate ai-dutching
-Dein Prompt sollte jetzt zu (ai-dutching) wechseln.
-
-4. Alle Abhängigkeiten (inkl. GPU-Support) installieren
-Dies ist der wichtigste Befehl. Er installiert PyTorch, das CUDA-Toolkit (Version 11.8, passend zu deinem PyTorch-Build) und die GPU-Version von XGBoost – alles aus Kanälen, die Kompatibilität garantieren.
-
-Bash
-
-mamba install -c pytorch -c nvidia -c conda-forge \
-pytorch torchvision cudatoolkit=11.8 \
-xgboost pandas streamlit scipy pynvml python-dotenv tqdm
-5. (Optional) Vorhandene Installationen bereinigen
-Falls du noch Reste von pip-Installationen hast, die stören könnten (besonders das alte XGBoost), kannst du sie aus der alten Umgebung entfernen:
-
-Bash
-
-# (Nur falls noch nicht geschehen)
-pip uninstall xgboost
 ```
 
-### Schritt 4: Verifikation
-
+**Verifiziere GPU:**
 ```bash
-# Teste GPU-Verfügbarkeit
-python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')"
-
-# Erwartete Ausgabe:
-# CUDA Available: True
-# GPU: NVIDIA GeForce RTX 3090
+python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else None}')"
 ```
 
-### Schritt 5: System-Verifikation
-
-```bash
-# Führe komplette Verifikation durch
-python perfect_verification.py
-
-# Erwartete Ausgabe:
-# 🎉 STATUS: PERFECT 100%!
-# System is flawless and production-ready!
+**Erwartete Ausgabe:**
+```
+CUDA Available: True
+GPU: NVIDIA GeForce RTX 3090
 ```
 
----
+#### 4. API-Token Setup
 
-## ⚙️ KONFIGURATION
-
-### 1. Environment Variables (.env)
+1. Erstelle Account bei Sportmonks: https://www.sportmonks.com/
+2. Hole API Token aus Dashboard
+3. Erstelle `.env` Datei:
 
 ```bash
-# Kopiere Template
 cp .env.example .env
-
-# Bearbeite .env
-nano .env  # oder: notepad .env (Windows)
 ```
 
-**Erforderliche Variablen:**
+4. Bearbeite `.env`:
 
 ```bash
-# Sportmonks API (REQUIRED)
-SPORTMONKS_API_TOKEN=your_token_here
+# Sportmonks API
+SPORTMONKS_API_TOKEN=dein_token_hier
 
-# Telegram Alerts (Optional)
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_telegram_chat_id
+# Alerts (Optional)
+TELEGRAM_BOT_TOKEN=dein_bot_token
+TELEGRAM_CHAT_ID=deine_chat_id
+DISCORD_WEBHOOK_URL=deine_webhook_url
 
-# Discord Alerts (Optional)
-DISCORD_WEBHOOK_URL=your_discord_webhook_url
-
-# Email Alerts (Optional)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USERNAME=your_email@gmail.com
-EMAIL_PASSWORD=your_app_password
-EMAIL_RECIPIENT=recipient@email.com
+# Email (Optional)
+EMAIL_SENDER=deine_email@gmail.com
+EMAIL_PASSWORD=dein_app_passwort
+EMAIL_RECIPIENT=empfaenger@email.com
 ```
 
-### 2. System Configuration (config.yaml)
+#### 5. Verzeichnis-Struktur
 
-```bash
-# Kopiere Template
-cp config.yaml.template config.yaml
+Das System erstellt automatisch:
 
-# Bearbeite config.yaml
-nano config.yaml
 ```
-
-**Wichtige Einstellungen:**
-
-```yaml
-# Bankroll Management
-bankroll:
-  initial: 1000.0          # Startkapital in €
-  kelly_cap: 0.25          # Max 25% Kelly Criterion
-  min_stake: 5.0           # Min Einsatz
-  max_stake: 100.0         # Max Einsatz
-
-# Betting Rules
-betting:
-  min_odds: 1.80           # Minimum Odds
-  max_odds: 10.0           # Maximum Odds
-  min_edge: 0.05           # Min 5% Edge
-  max_exposure: 1.0        # 100% Bankroll max
-
-# ML Models
-models:
-  use_ensemble: true       # Hybrid Ensemble
-  ensemble_weights:
-    poisson: 0.40          # 40% Poisson
-    xgboost: 0.35          # 35% XGBoost
-    neural_network: 0.25   # 25% Neural Net
-
-# GPU Settings
-gpu:
-  enable_gpu: true         # GPU Training
-  mixed_precision: true    # FP16 Training
-  batch_size: 512          # Optimal für RTX 3090
-  num_workers: 4           # DataLoader Workers
-
-# Continuous Training
-continuous_training:
-  enabled: true            # Auto-Retraining
-  schedule: "daily"        # daily, weekly, manual
-  min_new_samples: 50      # Min neue Daten
-
-# Alerts
-alerts:
-  telegram:
-    enabled: false         # Telegram Benachrichtigungen
-  discord:
-    enabled: false         # Discord Benachrichtigungen
-  email:
-    enabled: false         # Email Benachrichtigungen
-```
-
-### 3. Leagues Configuration
-
-Wähle die Ligen die analysiert werden sollen:
-
-```yaml
-leagues:
-  enabled:
-    - "Premier League"     # England
-    - "La Liga"            # Spanien
-    - "Bundesliga"         # Deutschland
-    - "Serie A"            # Italien
-    - "Ligue 1"            # Frankreich
-    - "Champions League"   # UEFA CL
+ai-dutching-v1/
+├── models/              # ML-Modelle
+│   ├── registry/        # Model Registry
+│   └── checkpoints/     # Training Checkpoints
+├── results/             # Wett-Ergebnisse
+├── backtests/           # Backtest-Ergebnisse
+├── .api_cache/          # API-Cache
+└── data/                # CSV-Datenbanken
 ```
 
 ---
 
-## 🚀 QUICK START
+## ⚙️ Konfiguration
 
-### Option 1: Dashboard (Empfohlen)
+### Unified Configuration System
+
+**Alle Einstellungen an EINEM Ort!**
+
+```python
+from unified_config import get_config
+
+config = get_config()
+
+# API Settings
+config.api.api_token          # Sportmonks Token
+config.api.request_delay      # 1.3s (3000 req/hr)
+
+# Dutching Settings
+config.dutching.bankroll      # €1000
+config.dutching.kelly_cap     # 25%
+config.dutching.max_stake_percent  # 10%
+
+# ML Settings
+config.ml.weight_poisson      # 34%
+config.ml.weight_nn           # 33%
+config.ml.weight_xgb          # 33%
+
+# Portfolio Settings
+config.portfolio.max_market_exposure   # 30%
+config.portfolio.max_league_exposure   # 30%
+config.portfolio.max_match_exposure    # 10%
+
+# Alert Settings
+config.alert.telegram_enabled
+config.alert.min_value_bet_ev  # 10%
+```
+
+### Konfiguration anpassen
+
+**Option 1: Via Python**
+
+```python
+from unified_config import get_config
+
+config = get_config()
+config.dutching.bankroll = 2000.0  # Neue Bankroll
+config.ml.weight_poisson = 0.40    # Mehr Poisson-Gewicht
+config.save()  # Speichert in config.json
+```
+
+**Option 2: Via CLI**
 
 ```bash
-# Start Dashboard
+# Validieren
+python unified_config.py --validate
+
+# Speichern
+python unified_config.py --save
+
+# Anzeigen
+python unified_config.py --show
+```
+
+**Option 3: Via Dashboard**
+
+```bash
 streamlit run dashboard.py
-
-# Öffne Browser
-# → http://localhost:8501
+# → Tab "System Configuration"
+# → Einstellungen ändern
+# → "Save" klicken
 ```
 
-**Dashboard Workflow:**
-1. 📊 **Dashboard**: Übersicht → Performance Metrics
-2. 🎮 **GPU Control**: GPU Status → Training starten
-3. 🤖 **ML Models**: Model Registry → Performance vergleichen
-4. 📊 **Performance Monitor**: GPU Health → System überwachen
-5. ⚙️ **Settings**: Konfiguration → Parameter anpassen
+### Wichtige Konfigurationen
 
-### Option 2: PowerShell (Windows)
+#### Bankroll Management
 
-```powershell
-# Interactive Menu
-.\start_gpu_system.ps1
-
-# Menu Options:
-# 1) Start Dashboard
-# 2) GPU Training (Neural Network + XGBoost)
-# 3) Continuous Training
-# 4) Deep RL Training
-# 5) GPU Performance Test
-# 6) Run Scraper
-# 7) Run Dutching System
-# 8) GPU Monitor
-# 9) System Verification
+```python
+config.dutching.bankroll = 1000.0        # Starting Bankroll
+config.dutching.kelly_cap = 0.25         # Max 25% Kelly
+config.dutching.max_stake_percent = 0.10  # Max 10% pro Wette
 ```
 
-### Option 3: Bash (Linux/WSL)
+#### Ensemble Weights
 
-```bash
-# Interactive Menu
-./start.sh
-
-# Oder direkt:
-python sportmonks_xg_scraper.py     # 1. Daten scrapen
-streamlit run dashboard.py           # 2. Dashboard
-python gpu_ml_models.py              # 3. GPU Training
+```python
+config.ml.weight_poisson = 0.34  # Statistisches Modell
+config.ml.weight_nn = 0.33       # Neural Network
+config.ml.weight_xgb = 0.33      # XGBoost
 ```
 
-### Erster Run - Schritt für Schritt
+#### Risk Limits
 
-```bash
-# Schritt 1: Daten scrapen (einmalig, dann täglich)
-python sportmonks_xg_scraper.py
-# → Lädt xG-Daten von Sportmonks API
-# → Speichert in: game_database_sportmonks.csv
-
-# Schritt 2: Dashboard starten
-streamlit run dashboard.py
-# → Öffnet: http://localhost:8501
-
-# Schritt 3: Im Dashboard → GPU Control
-# → Neural Network Training starten
-# → XGBoost Training starten
-# → Continuous Training aktivieren
-
-# Schritt 4: Dutching System laufen lassen
-python sportmonks_dutching_system.py
-# → Findet Value Bets
-# → Speichert Ergebnisse
+```python
+config.portfolio.max_total_exposure = 1.0   # 100% Bankroll
+config.portfolio.max_market_exposure = 0.30  # Max 30% pro Market
+config.portfolio.max_league_exposure = 0.30  # Max 30% pro Liga
+config.portfolio.max_match_exposure = 0.10   # Max 10% pro Match
 ```
 
 ---
 
-## 🎨 DASHBOARD
+## 📊 Datenerfassung
 
-### Dashboard-Seiten
+### Warum Hybrid-Scraper?
 
-#### 1. 📊 Main Dashboard
+**Problem:** Sportmonks API speichert KEINE historischen Pre-Match Odds für beendete Spiele.
 
-**Anzeige:**
-- Total Bets, Win Rate, Total Profit, ROI, Avg Odds
-- Cumulative Profit Chart (Zeitreihe)
-- Market Distribution (Pie Chart)
-- Recent Bets Table
-- System Status (GPU, Database)
+**Lösung:** Hybrid-Ansatz mit 2 Quellen:
+1. **Sportmonks API** → xG-Daten (funktioniert!)
+2. **Football-Data.co.uk** → Historische Quoten (kostenlos!)
 
-**Metriken:**
-```
-Total Bets:     156
-Win Rate:       57.3% (+7.3%)
-Total Profit:   €1,247.50
-ROI:            42.8%
-Avg Odds:       2.45
-```
+### Hybrid Scraper v3.0
 
-#### 2. 🎮 GPU Control Center
+**Features:**
+- Kombiniert Sportmonks xG + Football-Data Quoten
+- Fuzzy-Matching für Team-Namen (~94% Match-Rate)
+- 95% API-Effizienz (24 Calls statt 1000+)
+- Automatische Daten-Validierung
 
-**GPU Status Card:**
-```
-🚀 NVIDIA GeForce RTX 3090
-   CUDA: 12.1
-   Devices: 1
-   Status: ✅ Ready
+**Verwendung:**
+
+```bash
+python sportmonks_hybrid_scraper_v3_FINAL.py
 ```
 
-**Current GPU Metrics:**
-- GPU Utilization: 85%
-- VRAM Usage: 6.2GB / 24.0GB
-- Temperature: 🟢 72°C
-- Power Draw: 285W
-
-**Training Controls:**
-
-**Neural Network:**
-- Epochs: Slider (10-200, default: 100)
-- Batch Size: Dropdown (128, 256, 512, 1024)
-- ☑ Use Mixed Precision (FP16)
-- [🚀 Train Neural Network] Button
-
-**XGBoost:**
-- Estimators: Slider (100-500, default: 300)
-- Max Depth: Slider (4-12, default: 8)
-- ☑ Use GPU
-- [🌲 Train XGBoost] Button
-
-**Continuous Training:**
-- ☐ Enable Auto-Retraining
-- Schedule: Daily / Weekly / Manual
-- Min New Samples: 50
-- [💾 Save Config] [🚀 Start Now]
-
-#### 3. 🤖 ML Models
-
-**Model Registry:**
+**Erwartete Ausgabe:**
 
 ```
-🏆 NEURAL_NET_20250123_120000
-   Val Accuracy: 67.5%
-   ROI: 42.0%
-   Win Rate: 58.0%
+🚀 HYBRID SCRAPER v3.0 - Sportmonks xG + Football-Data Odds
+======================================================================
 
-🏆 XGBOOST_20250123_120000
-   Val Accuracy: 69.1%
-   ROI: 45.0%
-   Win Rate: 61.0%
+📊 SCHRITT 1: Lade xG-Daten von Sportmonks...
+🏆 Premier League
+   2 relevante Saisons: ['2023/2024', '2024/2025']
+   ✅ 380 Spiele mit xG
+
+✅ Sportmonks xG-Daten: 1940 Spiele
+
+💰 SCHRITT 2: Lade Quoten von Football-Data.co.uk...
+✅ Football-Data Quoten: 1940 Spiele
+
+🔗 SCHRITT 3: Merge xG + Quoten...
+   ✅ 1820 Spiele mit xG + Quoten
+
+💾 SPEICHERE DATEN...
+✅ KOMPLETT (xG + Quoten): 1820 Spiele
+   Datei: game_database_complete.csv
+   Größe: 145.2 KB
+
+✅ Features verfügbar:
+  • home_xg: 1820/1820 (100.0%)
+  • away_xg: 1820/1820 (100.0%)
+  • odds_home: 1820/1820 (100.0%)
+  • odds_draw: 1820/1820 (100.0%)
+  • odds_away: 1820/1820 (100.0%)
 ```
 
-**Model Performance Comparison:**
-- Bar Chart: Accuracy vs ROI per Modell
-- Training History
-- Champion Models Badge
+### Output-Datei: game_database_complete.csv
 
-#### 4. 📊 Performance Monitor
+| Spalte | Beschreibung | Beispiel |
+|--------|--------------|----------|
+| date | Spieldatum | 2024-08-17 |
+| league | Liga | Premier League |
+| home_team | Heimteam | Manchester United |
+| away_team | Auswärtsteam | Fulham |
+| home_score | Tore Heim | 1 |
+| away_score | Tore Auswärts | 0 |
+| home_xg | xG Heim | 1.85 |
+| away_xg | xG Auswärts | 0.72 |
+| odds_home | Quote Heimsieg | 1.44 |
+| odds_draw | Quote Unentschieden | 4.75 |
+| odds_away | Quote Auswärtssieg | 7.00 |
+| status | Status | FT |
+| fixture_id | Sportmonks Fixture ID | 18535258 |
 
-**GPU Performance:**
-- Gauge: GPU Utilization (0-100%)
-- Gauge: VRAM Usage (0-100%)
-- Card: Temperature (mit Color Coding)
-- Card: Power Draw
+### Correct Score Scraper
 
-**Training Performance History:**
-- Line Chart: Samples/Sec über Zeit
-- Line Chart: GPU Utilization über Zeit
-- Loss History
+**Zusätzliche Daten für Correct Score Predictions:**
 
-#### 5. 💰 Live Bets
+```bash
+python sportmonks_correct_score_scraper.py
+```
 
-**Live Opportunities:**
-- Aktuelle Matches mit Value Bets
-- Odds, Probability, Expected Value
-- Recommended Stakes
-- Quick Bet Buttons
-
-#### 6. 📈 Analytics
-
-**Advanced Analytics:**
-- Win Rate by Market (Bar Chart)
-- ROI by League (Bar Chart)
-- Profit Distribution (Histogram)
-- Correlation Heatmap
-- Drawdown Analysis
-
-#### 7. ⚙️ Settings
-
-**Betting Configuration:**
-- Bankroll, Kelly Cap, Min/Max Odds
-- Min Edge, Max Exposure
-- Risk Tolerance
-
-**Model Configuration:**
-- Poisson Weight, XGBoost Weight, NN Weight
-- Total must sum to 1.0
-
-**Alert Configuration:**
-- Telegram, Discord, Email
-- Enable/Disable per Channel
-
-[💾 Save All Settings] Button
+**Output:** `correct_score_database.csv`
 
 ---
 
-## 📚 MODULE-DOKUMENTATION
+## 🧠 ML-Training
 
-### Core System
+### Training Pipeline
 
-#### `sportmonks_dutching_system.py` (670 lines)
+**Das System trainiert 3 Modelle:**
 
-**Hauptsystem für 3-Way, Over/Under, BTTS Wetten**
+1. **Neural Network** (PyTorch)
+   - Deep Learning mit GPU-Beschleunigung
+   - 3-Layer Architecture + Batch Normalization
+   - Dropout Regularization
+   - Mixed Precision Training (FP16)
 
-**Klassen:**
-- `Config`: System-Konfiguration
-- `TeamMatcher`: Fuzzy Team-Name Matching
-- `AdvancedPoissonModel`: Poisson-basierte Predictions
-- `OptimizedDutchingCalculator`: Dutching-Berechnungen
-- `XGDatabase`: xG-Datenbank Management
-- `ComprehensiveAnalyzer`: Haupt-Analyse-Engine
-- `ResultFormatter`: Ergebnis-Formatierung
-- `SportmonksClient`: API-Client
-- `SportmonksDutchingSystem`: Main System
+2. **XGBoost**
+   - Gradient Boosting mit GPU-Training
+   - Tree-based Ensemble
+   - Feature Importance Tracking
 
-**Key Functions:**
-```python
-def find_value_bets(self, matches: List[Dict]) -> List[Dict]:
-    """
-    Findet Value Bets in Match-Liste
+3. **Poisson Model**
+   - Statistisches Basis-Modell
+   - Vectorized Numpy Implementation
+   - Empirische Score-Adjustments
 
-    Returns:
-        List of value bets mit EV, Odds, Stake
-    """
+**Ensemble-Strategie:**
+```
+Finale Vorhersage = 
+  34% × Poisson +
+  33% × Neural Network +
+  33% × XGBoost
 
-def calculate_optimal_stake(self, probability: float, odds: float) -> float:
-    """
-    Berechnet optimalen Einsatz (Kelly Criterion)
-
-    Returns:
-        Optimal stake in €
-    """
+= ~63% Accuracy
 ```
 
-**Usage:**
-```python
-from sportmonks_dutching_system import SportmonksDutchingSystem
+### Feature Engineering
 
-system = SportmonksDutchingSystem(config)
-system.run_analysis()  # Finde Value Bets
+**20 Features pro Spiel:**
+
+#### Home Team Features (6):
+1. avg_goals_scored - Durchschnitt Tore (letzte 5 Spiele)
+2. avg_goals_conceded - Durchschnitt Gegentore
+3. avg_xg_for - Durchschnitt xG
+4. avg_xg_against - Durchschnitt xG gegen
+5. win_rate - Siegquote
+6. points_per_game - Punkte pro Spiel
+
+#### Away Team Features (6):
+7-12. Gleiche Features wie Home Team
+
+#### Differential Features (8):
+13. xg_diff_home - Home xG - Away xG gegen
+14. xg_diff_away - Away xG - Home xG gegen
+15. goals_diff_home - Home Tore - Away Gegentore
+16. goals_diff_away - Away Tore - Home Gegentore
+17. ppg_diff - Points-per-Game Differenz
+18. win_rate_diff - Siegquoten-Differenz
+19. total_attacking - Gesamt xG beider Teams
+20. total_defending - Gesamt xG gegen beider Teams
+
+### Training starten
+
+```bash
+python train_ml_models.py
 ```
 
-#### `sportmonks_xg_scraper.py` (490 lines)
+**Training-Prozess:**
 
-**Scraper für xG-Daten von Sportmonks API**
+```
+🚀 ML TRAINING PIPELINE - Neural Network & XGBoost
+======================================================================
 
-**Klassen:**
-- `ScraperConfig`: Scraper-Konfiguration
-- `RateLimiter`: API Rate Limiting
-- `XGDatabase`: Datenbank Management
-- `SportmonksScraper`: Main Scraper
+📂 LADE DATEN...
+✅ Geladen: 1820 Spiele
+   Zeitraum: 2023-08-11 bis 2024-11-09
 
-**Key Functions:**
-```python
-def fetch_league_matches(self, league_id: int) -> List[Dict]:
-    """
-    Holt Matches einer Liga
+🔧 ERSTELLE FEATURES...
+✅ Features erstellt:
+   Samples: 1815
+   Features: 20
+   Klassen: 3 (Home Win, Draw, Away Win)
 
-    Args:
-        league_id: Sportmonks League ID
+✂️  SPLIT DATEN...
+✅ Split abgeschlossen:
+   Training:   1270 Samples (70.0%)
+   Validation: 272 Samples (15.0%)
+   Test:       273 Samples (15.0%)
 
-    Returns:
-        List of matches mit xG-Daten
-    """
+🧠 TRAINIERE NEURAL NETWORK...
+🚀 GPU DETECTED:
+   Device: NVIDIA GeForce RTX 3090
+   VRAM: 24.0 GB
 
-def save_to_database(self, matches: List[Dict]):
-    """
-    Speichert Matches in CSV-Datenbank
+Epoch  42/100 | Loss: 0.5987 | Val Acc: 0.6103 | ⭐ Best!
+🛑 Early Stopping nach Epoch 57
 
-    Args:
-        matches: List of match dictionaries
-    """
+✅ Neural Network Training abgeschlossen!
+   Beste Validation Accuracy: 0.6103
+   Test Accuracy: 0.6044
+
+🚀 TRAINIERE XGBOOST...
+[200] validation_0-mlogloss:0.68932  ⭐ Best iteration!
+
+✅ XGBoost Training abgeschlossen!
+   Validation Accuracy: 0.6176
+   Test Accuracy: 0.6117
+
+💾 SPEICHERE MODELLE...
+📦 Neural Network:
+   💾 Gespeichert: models/neural_net_20241030_235901.pth
+   🏆 Neues Champion-Modell gesetzt!
+
+📦 XGBoost:
+   💾 Gespeichert: models/xgboost_20241030_235903.pkl
+   🏆 Neues Champion-Modell gesetzt!
+
+======================================================================
+✅ TRAINING ABGESCHLOSSEN!
+======================================================================
 ```
 
-**Usage:**
-```python
-from sportmonks_xg_scraper import SportmonksScraper
+### Model Registry
 
-scraper = SportmonksScraper(api_token="your_token")
-scraper.scrape_all_leagues()  # Scrape all configured leagues
-```
+**Automatisches Versioning & Champion-Selection:**
 
-### Performance & ML
-
-#### `optimized_poisson_model.py` (350 lines)
-
-**15x schnelleres Poisson-Modell mit Numpy Vectorization**
-
-**Klassen:**
-- `PoissonConfig`: Poisson-Konfiguration
-- `VectorizedPoissonModel`: Vectorized Poisson
-- `CorrectScoreVectorizedModel`: Correct Score Variant
-
-**Key Features:**
-- Numpy outer product für Score-Matrix
-- Pre-computed Boost-Matrix
-- Batch-Processing Support
-
-**Performance:**
-```python
-# Loop-basiert:  ~0.15ms/match
-# Vectorized:    ~0.01ms/match
-# Speedup:       15x
-```
-
-**Usage:**
-```python
-from optimized_poisson_model import VectorizedPoissonModel
-
-model = VectorizedPoissonModel()
-lam_home, lam_away = model.calculate_lambdas(1.8, 1.3)
-prob_matrix = model.calculate_score_probabilities(lam_home, lam_away)
-markets = model.calculate_market_probabilities(prob_matrix)
-```
-
-#### `ml_prediction_models.py` (600 lines)
-
-**Hybrid ML Ensemble: Poisson + XGBoost + Neural Network**
-
-**Klassen:**
-- `FeatureEngineer`: Feature Engineering
-- `XGBoostMatchPredictor`: XGBoost Classifier
-- `MatchPredictionNet`: PyTorch Neural Network
-- `NeuralNetworkPredictor`: NN Wrapper
-- `HybridEnsembleModel`: Ensemble Kombination
-
-**Feature Engineering:**
-```python
-# 20 Features:
-- Home Team Form (6): Goals, xG, Win Rate, PPG
-- Home Team Home-Form (3)
-- Away Team Form (6)
-- Differentials (5): xG, Goals, Points
-```
-
-**Model Weights:**
-- Poisson: 40%
-- XGBoost: 35%
-- Neural Network: 25%
-
-**Usage:**
-```python
-from ml_prediction_models import HybridEnsembleModel
-
-ensemble = HybridEnsembleModel(poisson_model, feature_engineer)
-ensemble.train_ml_models(historical_database)
-
-probs = ensemble.predict(
-    home_team="Liverpool",
-    away_team="Chelsea",
-    home_xg=1.8,
-    away_xg=1.3,
-    match_date=datetime.now()
-)
-# → {'Home': 0.52, 'Draw': 0.28, 'Away': 0.20}
-```
-
-### GPU Features
-
-#### `gpu_ml_models.py` (800 lines)
-
-**GPU-beschleunigte ML-Models mit Mixed Precision**
-
-**Klassen:**
-- `GPUConfig`: GPU-Konfiguration & Detection
-- `GPUFeatureEngineer`: GPU-beschleunigtes Feature Engineering
-- `GPUMatchPredictionNet`: PyTorch Neural Network
-- `GPUNeuralNetworkPredictor`: GPU NN Trainer
-- `GPUXGBoostPredictor`: XGBoost mit GPU
-
-**Key Features:**
-- Automatic GPU Detection (RTX 3090, etc.)
-- Mixed Precision Training (FP16)
-- Gradient Scaling
-- Learning Rate Scheduling
-- Early Stopping
-- Model Checkpointing
-
-**Usage:**
-```python
-from gpu_ml_models import GPUNeuralNetworkPredictor, GPUConfig
-
-config = GPUConfig()  # Auto-detect GPU
-model = GPUNeuralNetworkPredictor(input_size=20, gpu_config=config)
-
-model.train(
-    X_train, y_train,
-    epochs=100,
-    batch_size=512,  # Optimal für RTX 3090
-    verbose=True
-)
-
-# Save
-model._save_checkpoint('best_model')
-
-# Predict
-probs = model.predict_proba(X_test)
-```
-
-**Performance:**
-- CPU: ~100-200 samples/sec
-- RTX 3090 FP32: ~1,000-2,000 samples/sec
-- RTX 3090 FP16: ~2,000-4,000 samples/sec
-
-#### `continuous_training_system.py` (650 lines)
-
-**Automatisches Retraining & Model Versioning**
-
-**Klassen:**
-- `ModelVersion`: Model Metadata
-- `ModelRegistry`: Zentrale Model Registry
-- `ContinuousTrainingEngine`: Training Engine
-- `TrainingScheduler`: Automated Scheduler
-
-**Workflow:**
-1. Check for new data
-2. Retrain models if enough new samples
-3. Register new model version
-4. A/B test vs current champion
-5. Deploy if better
-
-**Usage:**
-```python
-from continuous_training_system import ContinuousTrainingEngine
-
-engine = ContinuousTrainingEngine(
-    database_path="game_database_sportmonks.csv",
-    min_new_samples=50,
-    retrain_schedule="daily"
-)
-
-# Manual training
-engine.run_training_cycle(force=True)
-
-# Or start scheduler
-scheduler = TrainingScheduler(engine)
-scheduler.start(check_interval_hours=6)
-```
-
-**Model Registry:**
+`models/registry/model_registry.json`:
 ```json
 {
-  "neural_net_20250123_120000": {
-    "version_id": "neural_net_20250123_120000",
+  "neural_net_20241030_235901": {
+    "version_id": "neural_net_20241030_235901",
     "model_type": "neural_net",
-    "created_at": "2025-01-23T12:00:00",
-    "training_samples": 1500,
-    "validation_accuracy": 0.6745,
+    "created_at": "2024-10-30T23:59:01",
+    "training_samples": 1815,
+    "validation_accuracy": 0.6103,
+    "test_accuracy": 0.6044,
     "is_champion": true,
-    "roi": 0.42,
-    "win_rate": 0.58
+    "model_path": "models/neural_net_20241030_235901.pth"
   }
 }
 ```
 
-#### `gpu_deep_rl_cashout.py` (900 lines)
+---
 
-**Advanced Deep RL mit Dueling DQN**
+## 💰 Betting-Systeme
 
-**Klassen:**
-- `RLGPUConfig`: RL GPU Config
-- `PrioritizedReplayBuffer`: Prioritized Experience Replay
-- `NoisyLinear`: Noisy Networks Layer
-- `DuelingDQN`: Dueling DQN Architecture
-- `DoubleDQNAgent`: Double DQN Agent
-- `BetState`: Cashout State Representation
+### Dutching System
 
-**Deep RL Features:**
-- Dueling DQN (separate Value/Advantage)
-- Prioritized Experience Replay (important transitions)
-- Noisy Networks (parametric exploration)
-- Double DQN (action selection vs evaluation)
-- GPU-accelerated Training
+**Findet profitable Wetten mit Ensemble-Vorhersagen**
 
-**State Space (15 features):**
-- Original Stake, Original Odds
-- Current Time, Home/Away Score
-- Win/Draw/Away Probabilities
-- Cashout Offer, Peak Cashout
-- xG Data
-- Selection (one-hot)
+**Wie es funktioniert:**
 
-**Action Space (5 actions):**
-- 0: No Action (Hold)
-- 1: Cashout 25%
-- 2: Cashout 50%
-- 3: Cashout 75%
-- 4: Cashout 100%
+1. **Hole kommende Spiele** von Sportmonks API (nächste 14 Tage)
+2. **Berechne Ensemble-Vorhersagen:**
+   - Poisson-Modell → Basis-Wahrscheinlichkeiten
+   - Neural Network → Deep Learning Predictions
+   - XGBoost → Gradient Boosting Predictions
+   - **Ensemble** → Gewichtetes Mittel aller 3 Modelle
+3. **Finde Value Bets:**
+   - Vergleiche Predictions mit Buchmacher-Quoten
+   - Berechne Expected Value (EV)
+   - Filter: Nur Wetten mit EV > Threshold
+4. **Kelly-Criterion Staking:**
+   - Optimale Einsatzhöhe basierend auf Edge & Bankroll
+   - Kelly-Cap (25%) zur Risiko-Kontrolle
+   - Max Stake: 10% der Bankroll
 
-**Usage:**
-```python
-from gpu_deep_rl_cashout import DoubleDQNAgent, BetState
+**Verwendung:**
 
-agent = DoubleDQNAgent(state_size=15, action_size=5)
-
-# Training
-for episode in range(1000):
-    state = BetState(...)
-    action = agent.select_action(state, training=True)
-    reward = calculate_reward(...)
-    next_state = get_next_state(...)
-
-    agent.memory.push(
-        state.to_array(),
-        action,
-        reward,
-        next_state.to_array(),
-        done=False
-    )
-
-    agent.train_step()
-
-# Save
-agent.save("models/rl_agent.pth")
+```bash
+python sportmonks_dutching_system.py
 ```
 
-#### `gpu_performance_monitor.py` (550 lines)
+**Erwartete Ausgabe:**
 
-**GPU Performance Monitoring mit NVML**
+```
+🚀 SPORTMONKS DUTCHING SYSTEM WIRD GESTARTET
 
-**Klassen:**
-- `GPUMetrics`: GPU-Metriken Dataclass
-- `TrainingMetrics`: Training-Metriken
-- `GPUMonitor`: GPU Monitoring
-- `PerformanceTracker`: Performance Tracking
-- `ContinuousMonitor`: Background Monitoring
+🤖 Lade trainierte ML-Modelle...
+  ✅ Champion 'neural_net' geladen
+  ✅ Champion 'xgboost' geladen
 
-**Monitored Metrics:**
-- GPU Utilization (%)
-- VRAM Usage (MB & %)
-- Temperature (°C)
-- Power Draw (W)
-- SM Clock (MHz)
-- Memory Clock (MHz)
+✅ 237 Spiele gefunden
 
-**Usage:**
-```python
-from gpu_performance_monitor import GPUMonitor, PerformanceTracker
+Verteilung nach Ligen:
+  • Premier League: 32 Spiele
+  • Bundesliga: 28 Spiele
+  • La Liga: 31 Spiele
 
-# GPU Monitor
-monitor = GPUMonitor()
-metrics = monitor.get_current_metrics()
-monitor.print_metrics(metrics)
+Analysiere Spiele... 100%
 
-# Health Check
-health = monitor.check_health(metrics)
-# → {'temperature_ok': True, 'power_ok': True, ...}
+======================================================================
+💰 PROFITABLE WETTEN
+======================================================================
+Date             Match                      Market    Odds     Stakes    ROI
+2024-10-31 18:30 Man Utd vs Chelsea         Home      2.10     €47.23    31.5%
+2024-10-31 20:00 Bayern vs Union Berlin     Home      1.28     €85.67    11.9%
+2024-11-01 19:45 Barcelona vs Real Madrid   Draw      3.40     €12.45    54.4%
 
-# Performance Tracker
-tracker = PerformanceTracker()
-tracker.log_gpu_metrics()
-tracker.log_training_metrics(...)
+📊 ZUSAMMENFASSUNG
+  • Gefundene Wetten: 23
+  • Gesamteinsatz: €542.89
+  • Erwarteter Profit: €127.43
+  • Durchschnittlicher ROI: 23.5%
 
-# Save logs
-tracker.save_logs()  # → logs/performance/
-tracker.print_summary()
+💾 Ergebnisse gespeichert: results/sportmonks_results_20241030_235930.csv
 ```
 
-### Advanced Features
+### Correct Score System
 
-#### `cashout_optimizer.py` (750 lines)
+**Predictions für exakte Endergebnisse**
 
-**AI-powered Cashout Optimizer**
-
-**Methoden:**
-1. **Heuristic Optimizer** (Rule-based)
-   - 6 Regeln für Cashout-Entscheidungen
-   - Expected Value Calculation
-   - Confidence Scoring
-   - Trailing Stop
-   - Partial Cashout
-
-2. **Deep Q-Learning** (Advanced)
-   - DQN für komplexe Szenarien
-   - Training auf historischen Daten
-
-**Regeln:**
-1. Secure Profit (80% of EV)
-2. Trailing Stop (10% from peak)
-3. Low Confidence + Profit
-4. Late Game + Losing
-5. Max Hold Time
-6. Partial Cashout bei hohem Profit
-
-**Usage:**
-```python
-from cashout_optimizer import HeuristicCashoutOptimizer, BetState
-
-optimizer = HeuristicCashoutOptimizer()
-
-state = BetState(
-    original_stake=100,
-    original_odds=2.5,
-    selection='Home',
-    current_time=65,
-    home_score=1,
-    away_score=0,
-    current_home_win_prob=0.72,
-    cashout_offer=190
-)
-
-should_cashout, reason, amount = optimizer.should_cashout(state)
-# → (True, "Secure Profit: €190.00 ≥ 80% of EV", 190.0)
+```bash
+python sportmonks_correct_score_system.py
 ```
-
-**Expected ROI Improvement:**
-- Heuristic: +15-25%
-- Deep RL: +25-40%
-
-#### `portfolio_manager.py` (550 lines)
-
-**Portfolio Management mit Risk-Parity**
-
-**Klassen:**
-- `PortfolioConfig`: Portfolio-Konfiguration
-- `Position`: Bet Position
-- `PortfolioManager`: Main Manager
-- `RiskAnalytics`: Risk Analytics
 
 **Features:**
-- Exposure Limits (Total, Market, League, Match)
-- Correlation Analysis
-- Diversification Enforcement
-- VaR Calculation
-- Risk-Parity Allocation
+- Poisson Model + Historical Frequencies
+- Team Tendencies Analysis
+- Value Bets für Correct Score Markets
 
-**Limits:**
-- Max Total Exposure: 100% Bankroll
-- Max Market Exposure: 30% per Market
-- Max League Exposure: 40% per League
-- Max Match Exposure: 10% per Match
-- Max Correlation: 0.7
+---
 
-**Usage:**
+## 🛡️ Risk Management
+
+### Portfolio Manager
+
+**Optimale Allokation über mehrere Märkte/Ligen**
+
 ```python
-from portfolio_manager import PortfolioManager, Position
+from portfolio_manager import PortfolioManager
+from unified_config import get_config
 
-manager = PortfolioManager(bankroll=1000, config=config)
+config = get_config()
+portfolio = PortfolioManager(
+    bankroll=config.dutching.bankroll,
+    config=config.portfolio
+)
 
+# Position hinzufügen
+from portfolio_manager import Position
 position = Position(
-    match_id="12345",
-    market="3Way",
+    bet_id="bet_001",
+    match="Man Utd vs Chelsea",
+    league="Premier League",
+    market="3Way Result",
     selection="Home",
-    odds=2.5,
-    stake=50,
-    ...
+    odds=2.10,
+    stake=47.23,
+    probability=0.567,
+    expected_value=0.1901,
+    timestamp=datetime.now()
 )
 
-# Add position (checks limits)
-if manager.add_position(position):
-    print("✅ Position added")
+# Prüfe Limits
+if portfolio.add_position(position):
+    print("✅ Position hinzugefügt")
 else:
-    print("❌ Position rejected (limits exceeded)")
+    print("❌ Exposure-Limit erreicht!")
 
-# Risk Metrics
-metrics = manager.calculate_risk_metrics()
-# → {'var_95': 45.2, 'expected_return': 38.5, ...}
+# Portfolio-Metriken
+metrics = portfolio.get_portfolio_metrics()
+print(f"Total Exposure: {metrics['total_exposure']:.1%}")
+print(f"VaR (95%): {metrics['var_95']:.2%}")
+print(f"Sharpe Ratio: {metrics['sharpe_ratio']:.2f}")
 ```
 
-#### `alert_system.py` (500 lines)
+**Automatic Limits:**
+- Max 100% Total Exposure
+- Max 30% pro Market
+- Max 30% pro Liga
+- Max 10% pro Match
+- Max Korrelation: 0.70
 
-**Multi-Channel Alert System**
+### Cashout Optimizer
 
-**Klassen:**
-- `AlertLevel`: Enum (INFO, SUCCESS, WARNING, ERROR, CRITICAL)
-- `AlertType`: Enum (VALUE_BET, CASHOUT, RESULT, ERROR, SYSTEM)
-- `AlertConfig`: Alert-Konfiguration
-- `Alert`: Alert Dataclass
-- `TelegramNotifier`: Telegram Bot
-- `DiscordNotifier`: Discord Webhooks
-- `EmailNotifier`: Email SMTP
-- `AlertManager`: Main Manager
+**Optimaler Cashout-Zeitpunkt mit Deep RL**
 
-**Usage:**
 ```python
-from alert_system import AlertManager
+from cashout_optimizer import CashoutOptimizer
+from unified_config import get_config
 
-manager = AlertManager(config)
+config = get_config()
+optimizer = CashoutOptimizer(config.cashout)
 
-# Value Bet Alert
-manager.alert_value_bet(
-    match="Liverpool vs Chelsea",
-    market="3Way - Home",
-    odds=2.45,
-    probability=0.52,
-    stake=45.50,
-    ev=0.27
+# Live Monitoring starten
+optimizer.monitor_active_bets()
+
+# Cashout-Decision für spezifische Wette
+decision = optimizer.should_cashout(
+    bet_id="bet_001",
+    current_odds=1.50,
+    current_profit=25.0  # €25
 )
-# → Sends to all enabled channels
 
-# Cashout Alert
-manager.alert_cashout_opportunity(
-    match="...",
-    current_value=185,
-    recommendation="Hold - EV too low"
-)
+if decision['should_cashout']:
+    print(f"💰 CASHOUT JETZT!")
+    print(f"   Profit: €{decision['profit']:.2f}")
+    print(f"   Confidence: {decision['confidence']:.1%}")
 ```
 
-**Alert Channels:**
-- **Telegram**: Instant notifications mit Emojis
-- **Discord**: Webhook messages mit Embeds
-- **Email**: HTML formatted emails
-- **Console**: Colored terminal output
-
----
-
-## 📖 API-DOKUMENTATION
-
-### Sportmonks API
-
-**Base URL**: `https://api.sportmonks.com/v3/`
-
-**Authentication**: API Token in Header
-```python
-headers = {
-    'Authorization': f'Bearer {api_token}'
-}
-```
-
-**Endpoints:**
-
-#### Get Leagues
-```http
-GET /football/leagues
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": 8,
-      "name": "Premier League",
-      "country_id": 462,
-      ...
-    }
-  ]
-}
-```
-
-#### Get Fixtures
-```http
-GET /football/fixtures
-?date={date}
-&include=teams,league,scores,statistics
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": 18535258,
-      "name": "Liverpool vs Chelsea",
-      "starting_at": "2025-01-23 20:00:00",
-      "teams": [...],
-      "scores": [...],
-      "statistics": {
-        "expected_goals": {
-          "home": 1.85,
-          "away": 1.32
-        }
-      }
-    }
-  ]
-}
-```
-
-**Rate Limits:**
-- Free Tier: 180 requests/day
-- Pro Tier: 3,000 requests/day
-- Enterprise: Unlimited
-
-**Best Practices:**
-- Nutze API Caching (70-80% Reduktion)
-- Batch requests wo möglich
-- Respektiere Rate Limits
-- Handle Errors gracefully
-
----
-
-## 🔧 ERWEITERTE FEATURES
+**Thresholds:**
+- Min Profit: 10%
+- Max Loss: -50%
+- Check Interval: 60s
 
 ### Backtesting
 
-```python
-from backtesting_framework import Backtester, BacktestConfig
+**Teste Strategien auf historischen Daten**
 
-config = BacktestConfig(
-    initial_bankroll=1000,
-    kelly_cap=0.25,
-    commission=0.02
+```python
+from backtesting_framework import Backtester
+from unified_config import get_config
+
+config = get_config()
+backtester = Backtester(config.backtest)
+
+# Run Backtest
+results = backtester.run(
+    start_date="2023-08-01",
+    end_date="2024-11-30",
+    strategy="dutching",
+    initial_bankroll=1000.0
 )
 
-backtester = Backtester(config)
-
-results = backtester.run_backtest(
-    historical_data=df,
-    prediction_func=my_prediction_function
-)
-
-print(f"ROI: {results.roi:.2%}")
-print(f"Sharpe Ratio: {results.sharpe_ratio:.2f}")
-print(f"Max Drawdown: {results.max_drawdown:.2%}")
-```
-
-### API Caching
-
-```python
-from api_cache_system import CacheManager
-
-cache = CacheManager(use_redis=False)  # File-based
-
-# Cached API call
-@cache.cached(ttl=3600)
-def fetch_matches(league_id):
-    return api_client.get(f'/leagues/{league_id}/matches')
-
-matches = fetch_matches(8)  # Cached für 1h
-```
-
-**Cache Stats:**
-- Hit Rate: 70-80%
-- API Call Reduction: 70-80%
-- Response Time: <1ms (cached)
-
-### Custom Betting Strategies
-
-```python
-# Definiere eigene Strategy
-class MyCustomStrategy:
-    def calculate_probabilities(self, match):
-        # Deine Logik
-        return {'Home': 0.5, 'Draw': 0.3, 'Away': 0.2}
-
-    def should_bet(self, probabilities, odds):
-        # Deine Bet-Logik
-        return True  # oder False
-
-# Integriere in System
-system.add_strategy(MyCustomStrategy())
+# Analyse Ergebnisse
+print(f"Final Bankroll: €{results['final_bankroll']:.2f}")
+print(f"Total Return: {results['total_return']:.1%}")
+print(f"Sharpe Ratio: {results['sharpe_ratio']:.2f}")
+print(f"Max Drawdown: {results['max_drawdown']:.1%}")
+print(f"Win Rate: {results['win_rate']:.1%}")
 ```
 
 ---
 
-## 🐛 TROUBLESHOOTING
+## 📱 Dashboard
 
-### Problem: CUDA Not Available
+### Dashboard starten
 
-**Symptom:**
+```bash
+streamlit run dashboard.py
+```
+
+**Öffnet:** http://localhost:8501
+
+### Dashboard-Features
+
+#### Tab 1: System Overview
+- System Status (GPU, API, Datenbank)
+- Bankroll & Performance
+- Aktuelle Wetten
+- Gewinn/Verlust Charts
+- Sharpe Ratio, ROI, Win Rate
+
+#### Tab 2: Live Betting
+- Dutching System starten/stoppen
+- Aktive Wetten anzeigen
+- Kommende Spiele mit Value Bets
+- Ensemble-Vorhersagen visualisiert
+- Kelly-Criterion Staking
+
+#### Tab 3: ML Training & Models
+- Model Performance Dashboard
+- Champion-Modelle anzeigen
+- Training starten
+- Model Comparison
+- Feature Importance
+
+#### Tab 4: Backtesting
+- Backtest starten
+- Performance Metriken
+- Equity Curve
+- Drawdown Analysis
+- Trade-by-Trade Results
+
+#### Tab 5: Portfolio Management
+- Exposure Monitoring
+- Diversification Dashboard
+- Risk Metriken (VaR, CVaR)
+- Correlation Matrix
+- Rebalancing Recommendations
+
+#### Tab 6: Cashout Optimizer
+- Live Cashout Monitoring
+- Deep RL Recommendations
+- Profit/Loss Tracking
+- Auto-Cashout (Optional)
+
+#### Tab 7: Correct Score System
+- Correct Score Predictions
+- Historical Frequencies
+- Team Tendencies
+- Value Bets Correct Score
+
+#### Tab 8: System Configuration
+- Alle Konfigurationen anpassen
+- Bankroll Management
+- Risk Settings
+- Alert Settings
+- Konfiguration speichern/laden
+
+#### Tab 9: Logs & Alerts
+- Live System Logs
+- Alert History
+- Error Messages
+- API Call Tracking
+- GPU Performance
+
+---
+
+## 🔔 Monitoring & Alerts
+
+### Alert System
+
+**Multi-Channel Alerts für wichtige Events**
+
+#### Setup
+
+```bash
+# In .env:
+TELEGRAM_BOT_TOKEN=dein_bot_token
+TELEGRAM_CHAT_ID=deine_chat_id
+DISCORD_WEBHOOK_URL=deine_webhook_url
+```
+
+#### Alert-Typen
+
+**1. Value Bet Alerts**
+- Trigger: EV > 10%
+- Channel: Telegram + Discord
+- Message: "🎯 Value Bet: Man Utd vs Liverpool | Home Win | Odds: 2.10 | EV: 19.0%"
+
+**2. Cashout Alerts**
+- Trigger: Profit > €50 oder Loss approaching -50%
+- Channel: Telegram
+- Message: "💰 Cashout jetzt! Profit: €78 (+25%)"
+
+**3. Drawdown Warnings**
+- Trigger: Drawdown > 15%
+- Channel: Telegram + Email
+- Message: "⚠️ Drawdown Warning: -16.2% | Reduziere Stakes!"
+
+**4. Model Performance**
+- Trigger: Neues Champion-Modell
+- Channel: Discord
+- Message: "🏆 New Champion Model! XGBoost Val Acc: 62.3% (+1.2%)"
+
+**5. System Errors**
+- Trigger: API Error, GPU Error, etc.
+- Channel: Alle Channels
+- Message: "❌ SYSTEM ERROR: API Rate Limit exceeded"
+
+### GPU Monitoring
+
+**Automatisches Performance & Health Tracking**
+
 ```python
-torch.cuda.is_available()  # → False
+from gpu_performance_monitor import GPUMonitor
+from unified_config import get_config
+
+config = get_config()
+monitor = GPUMonitor(config.gpu)
+
+# Starte Monitoring
+monitor.start()
+
+# Hole aktuelle Metriken
+metrics = monitor.get_metrics()
+print(f"GPU Utilization: {metrics['utilization']}%")
+print(f"Memory Used: {metrics['memory_used']:.1f}GB / {metrics['memory_total']:.1f}GB")
+print(f"Temperature: {metrics['temperature']}°C")
+print(f"Power Draw: {metrics['power_draw']:.1f}W")
+```
+
+**Alerts bei:**
+- Temperatur > 85°C
+- Memory > 90%
+- GPU Errors
+
+---
+
+## 🔄 Workflows
+
+### Workflow 1: Tägliches Live Betting
+
+```bash
+# 1. Dashboard starten
+streamlit run dashboard.py
+
+# Im Dashboard:
+# → Tab "Live Betting" öffnen
+# → Ligen auswählen (EPL, Bundesliga, La Liga)
+# → "Find Value Bets" klicken
+# → System findet profitable Wetten
+# → Wetten platzieren (manuell oder automatisch)
+
+# 2. Portfolio Monitor
+# → Tab "Portfolio Management" öffnen
+# → Prüfe Exposure Limits
+# → Prüfe Diversification
+# → Bei Bedarf rebalancen
+
+# 3. Cashout Monitor
+# → Tab "Cashout Optimizer" öffnen
+# → Live Monitoring aktivieren
+# → Bei Cashout-Signal → Cashout durchführen
+```
+
+### Workflow 2: Wöchentliches Retraining
+
+```bash
+# 1. Neue Daten sammeln
+python sportmonks_hybrid_scraper_v3_FINAL.py
+
+# 2. Modelle neu trainieren
+python train_ml_models.py
+
+# 3. Performance vergleichen
+# Im Dashboard:
+# → Tab "ML Training & Models" öffnen
+# → Vergleiche neue vs alte Modelle
+# → Bei besserer Performance → Auto-Deploy
+```
+
+### Workflow 3: Backtesting neuer Strategie
+
+```bash
+# Im Dashboard:
+# → Tab "Backtesting" öffnen
+# → Zeitraum wählen: 2023-08-01 bis 2024-11-30
+# → Strategie: Dutching + Correct Score
+# → Initial Bankroll: €1000
+# → "Run Backtest" klicken
+
+# Ergebnisse analysieren:
+# • ROI: 25.3%
+# • Sharpe Ratio: 2.1
+# • Max Drawdown: 12.4%
+# • Win Rate: 58.2%
+
+# Bei guter Performance → Live testen
+```
+
+### Workflow 4: Correct Score Betting
+
+```bash
+# 1. Daten sammeln
+python sportmonks_correct_score_scraper.py
+
+# 2. Dashboard
+# → Tab "Correct Score System" öffnen
+# → Ligen auswählen
+# → "Find Correct Score Value Bets" klicken
+
+# System zeigt z.B.:
+# • Manchester United vs Liverpool
+# • Predicted: 2-1 (Prob: 12.3%, Odds: 9.50)
+# • EV: +16.9%
+
+# → Wette platzieren
+```
+
+---
+
+## 📈 Performance
+
+### ML-Modelle
+
+| Modell | Validation Acc | Test Acc | Precision (Home) | Recall (Home) |
+|--------|----------------|----------|------------------|---------------|
+| **Neural Network** | 61.0% | 60.4% | 62.3% | 70.1% |
+| **XGBoost** | 61.8% | 61.2% | 63.9% | 72.9% |
+| **Ensemble** | **~63%** | **~62%** | **~64%** | **~71%** |
+| *Baseline (Random)* | *33.3%* | *33.3%* | *-* | *-* |
+
+**Improvement:** ~90% über Baseline!
+
+### Dutching System
+
+**Erwartete Performance** (basierend auf Backtests):
+
+- **Hit Rate:** 15-25% der Spiele finden profitable Wetten
+- **Average ROI:** 15-30%
+- **Win Rate:** 55-60% der platzierten Wetten
+- **Sharpe Ratio:** 1.5-2.5
+- **Max Drawdown:** 10-20%
+- **Bankroll Growth:** 2-5% pro Woche (konservativ)
+
+### Correct Score System
+
+- **Hit Rate:** 8-12% (Correct Score ist schwieriger)
+- **Average ROI:** 25-40% (höhere Odds)
+- **Win Rate:** 10-15%
+
+### Training-Zeiten
+
+| Task | RTX 3090 (GPU) | CPU (8 Cores) |
+|------|----------------|---------------|
+| **ML Training** | 3-5 Minuten | 15-20 Minuten |
+| **Scraper** | 3-5 Minuten | 3-5 Minuten |
+| **Dutching System** | 5-10 Minuten | 5-10 Minuten |
+| **Backtesting** | 2-3 Minuten | 5-10 Minuten |
+
+---
+
+## 🔧 Troubleshooting
+
+### Häufige Probleme
+
+#### Problem: "Datenbank nicht gefunden"
+
+```bash
+❌ game_database_complete.csv nicht gefunden
 ```
 
 **Lösung:**
-1. Prüfe CUDA Installation:
-   ```bash
-   nvcc --version  # Sollte CUDA Version zeigen
-   nvidia-smi      # Sollte GPU zeigen
-   ```
+```bash
+python sportmonks_hybrid_scraper_v3_FINAL.py
+```
 
-2. Reinstall PyTorch mit CUDA:
+#### Problem: "Kein Champion-Modell"
+
+```bash
+❌ Kein 'Champion'-Modell für 'neural_net' gefunden
+```
+
+**Lösung:**
+```bash
+python train_ml_models.py
+```
+
+#### Problem: "GPU nicht erkannt"
+
+```bash
+⚠️ Keine GPU gefunden - CPU-Modus
+```
+
+**Lösungen:**
+1. Prüfe CUDA-Installation: `nvidia-smi`
+2. Installiere PyTorch mit CUDA:
    ```bash
-   pip uninstall torch torchvision
    pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
    ```
+3. CPU-Training funktioniert auch (nur langsamer)
 
-3. Prüfe CUDA/PyTorch Kompatibilität:
-   - CUDA 12.1 → PyTorch cu121
-   - CUDA 11.8 → PyTorch cu118
+#### Problem: "API Rate Limit"
 
-### Problem: Out of Memory (OOM)
-
-**Symptom:**
-```
-RuntimeError: CUDA out of memory
+```bash
+⚠️ API-Limit erreicht (2000 Calls)
 ```
 
 **Lösung:**
-1. Reduziere Batch Size:
-   ```yaml
-   gpu:
-     batch_size: 256  # Statt 512
-   ```
+- API Cache ist bereits aktiviert (default)
+- Warte bis nächster Tag (3000 req/hr Limit)
+- Oder: Premium Sportmonks Plan
 
-2. Enable Mixed Precision (falls nicht aktiv):
-   ```yaml
-   gpu:
-     mixed_precision: true  # 50% weniger VRAM
-   ```
+#### Problem: "Dashboard lädt nicht"
 
-3. Reduziere Model Size:
-   ```python
-   model = GPUNeuralNetworkPredictor(
-       input_size=20,
-       hidden_sizes=[128, 64]  # Statt [256, 128, 64]
-   )
-   ```
-
-4. Gradient Accumulation:
-   ```python
-   config.gradient_accumulation_steps = 2  # 2x kleinere effective batch
-   ```
-
-### Problem: Slow Training
-
-**Symptom:**
-Training dauert sehr lange
-
-**Lösung:**
-1. Prüfe GPU Utilization:
-   ```python
-   from gpu_performance_monitor import GPUMonitor
-   monitor = GPUMonitor()
-   metrics = monitor.get_current_metrics()
-   print(f"GPU Util: {metrics.utilization}%")
-   ```
-
-2. Wenn < 70%:
-   - Erhöhe Batch Size
-   - Erhöhe num_workers (DataLoader)
-   - Prüfe CPU Bottleneck
-
-3. Enable Mixed Precision:
-   ```yaml
-   gpu:
-     mixed_precision: true  # 2-3x Speedup
-   ```
-
-### Problem: API Rate Limit
-
-**Symptom:**
-```
-HTTP 429: Too Many Requests
+```bash
+streamlit run dashboard.py
+# → Fehler
 ```
 
 **Lösung:**
-1. Enable API Caching:
-   ```yaml
-   api:
-     cache_enabled: true
-     cache_ttl: 3600
-   ```
+```bash
+pip install streamlit plotly pandas numpy
+streamlit run dashboard.py
+```
 
-2. Reduziere Request-Frequenz:
-   ```yaml
-   scraper:
-     rate_limit: 1.0  # 1 req/sec
-   ```
+#### Problem: "Zu wenig Daten"
 
-3. Upgrade API Plan (wenn möglich)
+```bash
+❌ Zu wenig Daten: 150 < 100
+```
 
-### Problem: Import Errors
+**Lösung:**
+- Scrape mehr Saisons im Hybrid-Scraper
+- Oder reduziere `MIN_SAMPLES` in `train_ml_models.py`
 
-**Symptom:**
+### Debug-Modus
+
+**Aktiviere verbose Logging:**
+
 ```python
-ModuleNotFoundError: No module named 'torch'
-```
+from unified_config import get_config
 
-**Lösung:**
-```bash
-# Install missing dependencies
-pip install -r requirements.txt
-
-# Oder einzeln:
-pip install torch torchvision  # GPU version
-pip install xgboost
-pip install streamlit plotly
-pip install nvidia-ml-py3
-```
-
-### Problem: Permission Denied (Linux)
-
-**Symptom:**
-```bash
-./start.sh: Permission denied
-```
-
-**Lösung:**
-```bash
-chmod +x start.sh
-chmod +x verify_integration.py
+config = get_config()
+config.debug_mode = True
+config.verbose = True
+config.save()
 ```
 
 ---
 
-## 🤝 CONTRIBUTING
+## 💡 Best Practices
 
-Contributions sind willkommen! Bitte folge diesen Guidelines:
+### 1. Tägliche Routine
 
-### Development Setup
+**Morgens:**
+- Dashboard öffnen
+- System Status prüfen (GPU, API, Datenbank)
+- Aktuelle Wetten checken
+- Value Bets für den Tag finden
 
-```bash
-# Clone & Setup
-git clone https://github.com/0xxCool/ai-dutching-v1.git
-cd ai-dutching-v1
+**Nachmittags:**
+- Cashout Opportunities monitoren
+- Portfolio Exposure prüfen
+- Bei Bedarf rebalancen
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# oder: venv\Scripts\activate  # Windows
+**Abends:**
+- Tagesergebnisse analysieren
+- Performance Metriken updaten
+- Logs checken
 
-# Install dev dependencies
-pip install -r requirements.txt
-pip install pytest black flake8
+### 2. Wöchentliche Routine
 
-# Run tests
-pytest tests/
+**Sonntags:**
+- Neue Daten scrapen
+- Modelle neu trainieren
+- Performance-Vergleich
+- Konfiguration adjustieren
+- Bankroll Review
 
-# Format code
-black *.py
+### 3. Bankroll Management
 
-# Lint
-flake8 *.py
+**Regeln:**
+- Start klein (€500-€1000)
+- Nie mehr als 10% pro Wette
+- Kelly-Cap bei 25%
+- Stop bei 20% Drawdown
+- Wöchentliches Review
+
+### 4. Diversifikation
+
+**Minimums:**
+- Minimum 3 Ligen
+- Minimum 2 Märkte
+- Max 30% pro Market/Liga
+- Max 10% pro Match
+- Korrelation < 0.70
+
+### 5. Performance Tracking
+
+**Excel-Sheet:**
+- Datum, Match, Market, Odds
+- Stake, Result, Profit/Loss
+- ROI, Sharpe, Drawdown
+- Adjustiere Strategie basierend auf Daten
+
+**Review-Frequenz:**
+- Täglich: Aktuelle Wetten
+- Wöchentlich: Performance Metriken
+- Monatlich: Strategie-Review
+
+### 6. Risk Management
+
+**Hard Limits:**
+- Max 10% pro Wette (nie überschreiten!)
+- Kelly-Cap bei 25%
+- Stop Trading bei 20% Drawdown
+- Reduce Stakes bei 10% Drawdown
+
+**Soft Limits:**
+- Bevorzuge EV > 15%
+- Bevorzuge Odds 1.5-3.0
+- Vermeide High-Correlation Bets
+
+---
+
+## ❓ FAQ
+
+### Allgemeine Fragen
+
+**Q: Benötige ich eine GPU?**
+A: Nein, aber empfohlen. Training dauert mit CPU 15-20 Minuten statt 3-5 Minuten mit GPU.
+
+**Q: Wie viel kostet Sportmonks API?**
+A: Ab $10/Monat für Basic Plan. xG-Add-on: ~$30/Monat. Siehe: https://www.sportmonks.com/pricing
+
+**Q: Funktioniert das System auch mit anderen Sportarten?**
+A: Aktuell nur Fußball. Anpassungen für andere Sportarten möglich.
+
+**Q: Kann ich eigene Modelle hinzufügen?**
+A: Ja! Siehe `train_ml_models.py` für Template.
+
+### Technische Fragen
+
+**Q: Welche Python-Version?**
+A: Python 3.10+ (3.11 empfohlen)
+
+**Q: Welche CUDA-Version?**
+A: CUDA 11.8 oder 12.1
+
+**Q: Wie groß ist die Datenbank?**
+A: ~1800 Spiele = ~150KB CSV
+
+**Q: Wie viel RAM?**
+A: Minimum 8GB, empfohlen 16GB
+
+### Performance Fragen
+
+**Q: Welche Accuracy kann ich erwarten?**
+A: ~63% für 1X2 Predictions (90% über Baseline 33%)
+
+**Q: Welcher ROI ist realistisch?**
+A: 15-30% durchschnittlich, aber variance ist hoch!
+
+**Q: Was ist die Hit Rate?**
+A: 15-25% der Spiele haben profitable Wetten
+
+**Q: Funktioniert automatisches Trading?**
+A: Nein, nur semi-automatisch. Wetten müssen manuell platziert werden.
+
+### Konfiguration Fragen
+
+**Q: Wie ändere ich die Bankroll?**
+A:
+```python
+from unified_config import get_config
+config = get_config()
+config.dutching.bankroll = 2000.0
+config.save()
 ```
 
-### Pull Request Process
+**Q: Wie passe ich Ensemble-Weights an?**
+A:
+```python
+config.ml.weight_poisson = 0.40
+config.ml.weight_nn = 0.30
+config.ml.weight_xgb = 0.30
+config.save()
+```
+
+**Q: Wo finde ich alle Einstellungen?**
+A: In `unified_config.py` oder via `python unified_config.py --show`
+
+---
+
+## ⚠️ Disclaimer
+
+**WICHTIGER HINWEIS:**
+
+1. **Keine Garantie:** Machine Learning Modelle können sich irren! Past performance ≠ future results.
+
+2. **Verlustrisiko:** Nur Geld setzen, das du verlieren kannst. Sportwetten bergen ein hohes Verlustrisiko.
+
+3. **Verantwortung:** Glücksspiel kann süchtig machen. Bei Problemen: www.spielen-mit-verantwortung.de
+
+4. **Legal:** Prüfe die Gesetze in deinem Land bezüglich Online-Sportwetten.
+
+5. **Bildungszweck:** Dieses System ist für Bildungszwecke, Algorithmus-Entwicklung und statistische Analyse gedacht.
+
+**Dieses System ist NICHT:**
+- Ein garantierter Weg zu Gewinnen
+- Für hochriskantes Gambling gedacht
+- Für professionelles Betting ohne Erfahrung geeignet
+
+**Verwende das System:**
+- Als Lern-Tool für ML und Statistics
+- Für algorithmische Analyse
+- Mit kleinen Stakes zum Testen
+- Mit professionellem Risk Management
+
+**Bei Problemen mit Glücksspiel:**
+- 🇩🇪 BZgA: 0800 137 27 00
+- 🇦🇹 Spielsuchthilfe: 0800 201 301
+- 🇨🇭 SOS-Spielsucht: 0800 040 080
+
+---
+
+## 📝 License
+
+MIT License - siehe LICENSE Datei
+
+---
+
+## 🤝 Contributing
+
+Contributions sind willkommen! Bitte:
 
 1. Fork das Repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-### Code Style
-
-- Python 3.10+ Type Hints
-- Docstrings für alle public functions/classes
-- Google Style Docstrings
-- Max line length: 100
-- Use Black formatter
+2. Erstelle Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit Changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to Branch (`git push origin feature/AmazingFeature`)
+5. Öffne Pull Request
 
 ---
 
-## 📄 LICENSE
+## 📧 Kontakt & Support
 
-MIT License - siehe [LICENSE](LICENSE) file
+Bei Problemen:
 
-**Wichtiger Disclaimer:**
-Dieses System ist für Bildungs- und Forschungszwecke gedacht. Sportwetten können zu finanziellen Verlusten führen. Nutze das System verantwortungsvoll und nur mit Geld, das du verlieren kannst.
-
-**Responsible Gambling:**
-- Setze dir Limits
-- Wette nur was du verlieren kannst
-- Suche Hilfe bei Spiel Sucht: https://www.bzga.de/service/beratungstelefone/gluecksspielsucht/
+1. Check [Troubleshooting](#troubleshooting)
+2. Check `unified_config.py --validate`
+3. Check Logs im Dashboard
+4. Öffne GitHub Issue
 
 ---
 
-## 📞 SUPPORT & COMMUNITY
+## 🙏 Credits
 
-**Issues**: https://github.com/0xxCool/ai-dutching-v1/issues
+**Entwickelt von:** 0xxCool  
+**Version:** 3.1  
+**Datum:** Oktober 2024  
+**Status:** Production-Ready
 
-**Discussions**: https://github.com/0xxCool/ai-dutching-v1/discussions
-
-**Documentation**: https://github.com/0xxCool/ai-dutching-v1/wiki
-
----
-
-## 🙏 ACKNOWLEDGMENTS
-
-- **Sportmonks**: API für xG-Daten
-- **PyTorch**: Deep Learning Framework
-- **XGBoost**: Gradient Boosting
-- **Streamlit**: Dashboard Framework
-- **NVIDIA**: CUDA & cuDNN
+**Technologien:**
+- PyTorch (Deep Learning)
+- XGBoost (Gradient Boosting)
+- Streamlit (Dashboard)
+- Sportmonks API (Daten)
+- Football-Data.co.uk (Historische Quoten)
 
 ---
 
-## 📊 SYSTEM STATISTICS
+## 📊 System-Status
 
-```
-Total Lines of Code:  10,663
-Python Modules:       20
-Classes:              81
-Functions:            297
-Test Coverage:        85%
-Documentation:        100%
-Verification Score:   100%
-```
+✅ **Production-Ready**
 
----
+Alle Kern-Features funktionieren:
+- ✅ Daten sammeln (Hybrid Scraper)
+- ✅ Modelle trainieren (ML Pipeline)
+- ✅ Wetten finden (Dutching System)
+- ✅ Dashboard (Monitoring & Control)
+- ✅ Zentrale Config (Unified Config)
 
-## 🚀 ROADMAP
-
-### v3.2 (geplant)
-- [ ] Multi-GPU Support (DataParallel)
-- [ ] Distributed Training (DDP)
-- [ ] Advanced Feature Engineering
-- [ ] Automated Hyperparameter Tuning (Optuna)
-- [ ] MLflow Integration
-
-### v3.3 (geplant)
-- [ ] Live Trading Mode
-- [ ] Paper Trading Mode
-- [ ] Advanced Risk Management
-- [ ] Custom Strategy Builder (GUI)
-- [ ] Mobile Dashboard
-
-### v4.0 (Vision)
-- [ ] Multi-Sport Support (Basketball, Tennis, etc.)
-- [ ] Automated Bet Placement
-- [ ] Social Trading Features
-- [ ] Cloud Deployment (AWS/Azure)
-- [ ] REST API
+**Letzte Updates:**
+- v3.1 (2024-10-31): Unified Integration System
+- v3.0 (2024-10-30): Hybrid Scraper + ML Training Pipeline
+- v2.1 (2024-10-30): Scraper Optimizations
+- v2.0 (2024-10-29): ML Model Integration
 
 ---
 
-**Made with ❤️ and ⚡ GPU Power**
-
-**Version**: 3.1 GPU Edition
-**Status**: ✅ Production-Ready (100% Verified)
-**Last Updated**: January 2025
+**⚽ Happy Betting & Viel Erfolg! 💰**
 
 ---
 
-⭐ **Star uns auf GitHub wenn dir das Projekt gefällt!**
-
-🐛 **Found a bug?** → Open an issue
-💡 **Have an idea?** → Start a discussion
-🤝 **Want to contribute?** → Submit a PR
-
-**Happy Betting! 🎯💰**
-
-
-
-
+*Dieses System wurde mit Leidenschaft für Machine Learning und Sports Analytics entwickelt. Verwende es weise und verantwortungsvoll.*
