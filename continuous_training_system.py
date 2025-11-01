@@ -172,7 +172,7 @@ class ModelRegistry:
 
         return champions[0] if champions else None
 
-    def set_champion(self, version_id: str):
+    def set_champion(self, model_type: str, version_id: str):
         """Setze neues Champion-Modell"""
         if version_id not in self.versions:
             raise ValueError(f"Version {version_id} nicht gefunden!")

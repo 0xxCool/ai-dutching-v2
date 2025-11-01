@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import sys
+print(f"\n--- SCRIPT WIRD AUSGEFÜHRT MIT: {sys.executable} ---\n")
 """
 🚀 ML TRAINING PIPELINE - Neural Network & XGBoost
 ====================================================
@@ -18,6 +20,7 @@ Hardware:
     - CPU-Fallback verfügbar
 """
 
+import shutil
 import numpy as np
 import pandas as pd
 import torch
@@ -246,9 +249,12 @@ class NeuralNetworkTrainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
         self.gpu_config = GPUConfig()
+        # KORREKTUR: Parameter werden jetzt hier an den Konstruktor übergeben
         self.model = GPUNeuralNetworkPredictor(
             input_size=20,  # 20 Features vom FeatureEngineer
-            gpu_config=self.gpu_config
+            gpu_config=self.gpu_config,
+            learning_rate=self.config.NN_LEARNING_RATE,
+            early_stopping_patience=self.config.NN_EARLY_STOPPING_PATIENCE
         )
 
     def train(self, data_dict: dict) -> dict:
@@ -263,25 +269,27 @@ class NeuralNetworkTrainer:
         y_val = torch.LongTensor(data_dict['y_val']).to(self.gpu_config.device)
 
         # Train
-        history = self.model.train(
+        # KORREKTUR: Korrekter Aufruf der neuen train-Methode
+        self.model.train(
             X_train, y_train,
-            X_val, y_val,
             epochs=self.config.NN_EPOCHS,
             batch_size=self.config.NN_BATCH_SIZE,
-            learning_rate=self.config.NN_LEARNING_RATE,
-            early_stopping_patience=self.config.NN_EARLY_STOPPING_PATIENCE,
+            validation_data=(X_val, y_val), # Korrektes Keyword
             verbose=self.config.VERBOSE
         )
 
         # Evaluate
-        X_test = torch.FloatTensor(data_dict['X_test']).to(self.gpu_config.device)
-        y_test = data_dict['y_test']
+        y_test = data_dict['y_test'] # y_test bleibt numpy für sklearn metrics
 
-        y_pred = self.model.predict(X_test)
+        # KORREKTUR: predict_proba erwartet numpy array
+        y_pred_probs = self.model.predict_proba(data_dict['X_test'])
+        y_pred = np.argmax(y_pred_probs, axis=1) # Hol die Klassen-Indices
+        
         test_acc = accuracy_score(y_test, y_pred)
 
         print(f"\n✅ Neural Network Training abgeschlossen!")
-        print(f"   Beste Validation Accuracy: {history['best_val_acc']:.4f}")
+        # KORREKTUR: 'best_val_acc' holen wir jetzt direkt aus dem Modell-Objekt
+        print(f"   Beste Validation Accuracy: {self.model.best_val_acc:.4f}")
         print(f"   Test Accuracy: {test_acc:.4f}")
 
         # Classification Report
@@ -294,11 +302,10 @@ class NeuralNetworkTrainer:
 
         return {
             'model': self.model,
-            'val_acc': history['best_val_acc'],
+            'val_acc': self.model.best_val_acc,
             'test_acc': test_acc,
-            'history': history
+            'history': self.model.training_history # History aus dem Modell holen
         }
-
 
 # ==========================================================
 # XGBOOST TRAINER
@@ -308,7 +315,13 @@ class XGBoostTrainer:
 
     def __init__(self, config: TrainingConfig):
         self.config = config
-        self.model = GPUXGBoostPredictor(use_gpu=True)
+        self.model = GPUXGBoostPredictor(
+            use_gpu=True,
+            n_estimators=self.config.XGB_N_ESTIMATORS,
+            max_depth=self.config.XGB_MAX_DEPTH,
+            learning_rate=self.config.XGB_LEARNING_RATE,
+            early_stopping_rounds=self.config.XGB_EARLY_STOPPING_ROUNDS
+        )
 
     def train(self, data_dict: dict) -> dict:
         """Trainiere XGBoost"""
@@ -318,26 +331,26 @@ class XGBoostTrainer:
         # Train
         self.model.train(
             data_dict['X_train'], data_dict['y_train'],
-            data_dict['X_val'], data_dict['y_val'],
-            n_estimators=self.config.XGB_N_ESTIMATORS,
-            max_depth=self.config.XGB_MAX_DEPTH,
-            learning_rate=self.config.XGB_LEARNING_RATE,
-            early_stopping_rounds=self.config.XGB_EARLY_STOPPING_ROUNDS,
+            X_val=data_dict['X_val'],
+            y_val=data_dict['y_val'],
             verbose=self.config.VERBOSE
         )
 
         # Evaluate
-        y_pred = self.model.predict(data_dict['X_test'])
+        y_pred = self.model.predict_proba(data_dict['X_test']).argmax(axis=1)
         y_pred_proba = self.model.predict_proba(data_dict['X_test'])
 
         test_acc = accuracy_score(data_dict['y_test'], y_pred)
 
-        # Validation Accuracy
-        y_val_pred = self.model.predict(data_dict['X_val'])
+        # KORREKTUR: Berechne die Validierungs-Genauigkeit manuell.
+        # 'best_score' ist der mlogloss, NICHT die Genauigkeit.
+        print("\n🔄 Berechne finale Validation Accuracy...")
+        y_val_pred = self.model.predict_proba(data_dict['X_val']).argmax(axis=1)
         val_acc = accuracy_score(data_dict['y_val'], y_val_pred)
 
+
         print(f"\n✅ XGBoost Training abgeschlossen!")
-        print(f"   Validation Accuracy: {val_acc:.4f}")
+        print(f"   Beste Validation Accuracy: {val_acc:.4f}")
         print(f"   Test Accuracy: {test_acc:.4f}")
 
         # Classification Report
@@ -345,7 +358,8 @@ class XGBoostTrainer:
         print(classification_report(
             data_dict['y_test'], y_pred,
             target_names=['Home Win', 'Draw', 'Away Win'],
-            digits=4
+            digits=4,
+            zero_division=0 # Verhindert Absturz, wenn eine Klasse 0 Recall hat
         ))
 
         return {
@@ -353,8 +367,7 @@ class XGBoostTrainer:
             'val_acc': val_acc,
             'test_acc': test_acc
         }
-
-
+    
 # ==========================================================
 # MODEL REGISTRY INTEGRATION
 # ==========================================================
@@ -364,6 +377,8 @@ class ModelSaver:
     def __init__(self, config: TrainingConfig):
         self.config = config
         self.config.MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        # Stelle sicher, dass das Registry-Verzeichnis auch existiert
+        Path("models/registry").mkdir(parents=True, exist_ok=True)
         self.registry = ModelRegistry()
 
     def save_neural_network(self, result: dict, n_samples: int) -> str:
@@ -372,8 +387,33 @@ class ModelSaver:
         model_name = f"neural_net_{timestamp}"
         model_path = self.config.MODEL_DIR / f"{model_name}.pth"
 
-        # Speichere Checkpoint
-        result['model'].save_checkpoint(model_name)
+        # KORREKTUR: Das Modell wurde bereits als 'best_model.pth' gespeichert.
+        # Wir kopieren es jetzt an seinen finalen Ort.
+        
+        best_model_path = Path('models/checkpoints/best_model.pth')
+        
+        if not best_model_path.exists():
+            print("   ⚠️ WARNUNG: 'models/checkpoints/best_model.pth' nicht gefunden.")
+            print("   Möglicherweise ist das NN-Training fehlgeschlagen oder hat nie gespeichert.")
+            # Versuchen, den letzten Checkpoint zu laden, falls vorhanden
+            try:
+                result['model'].load_checkpoint('best_model')
+                print("   Lade letzten Checkpoint und speichere manuell...")
+                # Die load_checkpoint-Methode existiert, also nutzen wir sie
+                # (Wir brauchen eine öffentliche save_checkpoint in gpu_ml_models.py)
+                # ODER wir passen gpu_ml_models.py an, um 'save_checkpoint' öffentlich zu machen.
+                
+                # Einfachste Lösung: Wir kopieren die Datei.
+                raise FileNotFoundError("Kein best_model.pth gefunden zum Kopieren.")
+
+            except Exception as e:
+                 raise FileNotFoundError(
+                     f"Konnte 'best_model.pth' nicht finden und manuelles Speichern ist fehlgeschlagen. {e}"
+                 )
+
+        # Kopiere die Datei
+        shutil.copy(best_model_path, model_path)
+
 
         # Registriere in Registry
         version = self.registry.register_model(

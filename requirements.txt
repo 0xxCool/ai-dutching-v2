@@ -1,65 +1,193 @@
-# ==========================================================
-# AI DUTCHING SYSTEM - DEPENDENCIES
-# ==========================================================
+# ============================================================
+# AI-DUTCHING ML SYSTEM - PYTHON REQUIREMENTS
+# ============================================================
+# Installation: pip install -r requirements.txt
+# ============================================================
 
-# Core Dependencies
-pandas>=2.0.0
-numpy>=1.24.0
-scipy>=1.10.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-tqdm>=4.65.0
-pyyaml>=6.0  # For config.yaml
+# =========================
+# CORE ML & DEEP LEARNING
+# =========================
+torch==2.3.1
+torchvision
+torchaudio
+xgboost==2.1.2
+lightgbm==4.5.0
+tensorflow==2.18.0  # Optional
 
-# Machine Learning
-scikit-learn>=1.3.0
-xgboost>=2.0.0
-lightgbm>=4.0.0
+# =========================
+# DATA SCIENCE ESSENTIALS
+# =========================
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+scikit-learn==1.5.2
+statsmodels==0.14.4
 
-# Deep Learning (for Neural Networks & Cashout DQN)
-# WICHTIG: Für GPU-Support (RTX 3090) siehe GPU Installation Sektion unten!
-torch>=2.0.0  # Mit CUDA 11.8 oder 12.1 für GPU
-torchvision>=0.15.0
+# =========================
+# FEATURE ENGINEERING
+# =========================
+imbalanced-learn==0.12.4
+category_encoders==2.6.4
+feature-engine==1.8.1
 
-# API & Caching
-aiohttp>=3.8.0  # Async HTTP
-diskcache>=5.6.0  # File-based caching
-redis>=4.6.0  # Optional: Redis caching
+# =========================
+# MODEL OPTIMIZATION
+# =========================
+optuna==4.1.0
+hyperopt==0.2.7
+ray[tune]==2.40.0
+scikit-optimize==0.10.2
 
-# Dashboard & Visualization (REQUIRED for dashboard.py)
-streamlit>=1.25.0
-plotly>=5.15.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
+# =========================
+# VISUALIZATION
+# =========================
+matplotlib==3.9.2
+seaborn==0.13.2
+plotly==5.24.1
+tensorboard==2.18.0
+wandb==0.18.7
 
-# Database (Optional but recommended)
-sqlalchemy>=2.0.0
-psycopg2-binary>=2.9.0  # PostgreSQL
-alembic>=1.11.0  # Migrations
+# =========================
+# MLOPS & TRACKING
+# =========================
+mlflow==2.18.0
+sacred==0.8.5
+neptune-client==1.12.0
+dagshub==0.3.48
 
-# Logging & Monitoring
-loguru>=0.7.0
+# =========================
+# WEB & API
+# =========================
+fastapi==0.115.5
+uvicorn==0.32.1
+streamlit==1.41.0
+gradio==5.7.1
+flask==3.1.0
+django==5.1.4
 
-# Data Validation
-pydantic>=2.0.0
+# =========================
+# DATABASE
+# =========================
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.36
+pymongo==4.10.1
+redis==5.2.0
+elasticsearch==8.16.0
 
-# Utils
-rapidfuzz>=3.0.0  # Fast string matching
-python-telegram-bot>=20.0  # Optional: Telegram alerts
-discord-webhook>=1.0.0  # Optional: Discord alerts
+# =========================
+# WEB SCRAPING
+# =========================
+requests==2.32.3
+aiohttp==3.11.10
+beautifulsoup4==4.12.3
+selenium==4.27.1
+scrapy==2.12.0
+playwright==1.49.0
 
-# Development (Optional)
-black>=23.0.0  # Code formatting
-pytest>=7.4.0  # Testing
-jupyter>=1.0.0  # Notebooks
-ipykernel>=6.25.0
+# =========================
+# DATA FORMATS
+# =========================
+pyyaml==6.0.2
+toml==0.10.2
+python-dotenv==1.0.1
+jsonschema==4.23.0
+xmltodict==0.14.2
+openpyxl==3.1.5
 
-# Optimization (Optional)
-optuna>=3.0.0  # Hyperparameter tuning
-mlflow>=2.7.0  # Model registry
+# =========================
+# UTILITIES
+# =========================
+tqdm==4.67.1
+rich==13.9.4
+colorama==0.4.6
+loguru==0.7.2
+click==8.1.8
+typer==0.15.1
 
-# GPU-Monitoring (für RTX 3090 Performance-Tracking)
-nvidia-ml-py3>=7.352.0  # NVML Python Bindings
+# =========================
+# GPU MONITORING
+# =========================
+nvidia-ml-py==12.560.30
+gpustat==1.1.1
+py3nvml==0.2.7
+pynvml==11.5.3
+
+# =========================
+# JUPYTER & NOTEBOOKS
+# =========================
+jupyter==1.1.1
+jupyterlab==4.3.3
+ipykernel==6.29.5
+ipywidgets==8.1.5
+nbconvert==7.16.4
+notebook==7.3.2
+
+# =========================
+# TESTING
+# =========================
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-asyncio==0.25.0
+hypothesis==6.122.1
+unittest-xml-reporting==3.2.0
+
+# =========================
+# CODE QUALITY
+# =========================
+black==24.10.0
+flake8==7.1.1
+pylint==3.3.2
+mypy==1.13.0
+isort==5.13.2
+autopep8==2.3.1
+
+# =========================
+# PROFILING & DEBUGGING
+# =========================
+memory_profiler==0.61.0
+line_profiler==4.2.0
+py-spy==0.4.0
+scalene==1.5.49
+snakeviz==2.2.0
+
+# =========================
+# PARALLEL PROCESSING
+# =========================
+joblib==1.5.0
+multiprocess==0.70.18
+dask[complete]==2024.12.1
+ray==2.40.0
+
+# =========================
+# TIME SERIES
+# =========================
+prophet==1.1.6
+pmdarima==2.1.0
+tslearn==0.7.0
+sktime==0.33.3
+
+# =========================
+# NATURAL LANGUAGE (Optional)
+# =========================
+# nltk==3.9.1
+# spacy==3.8.3
+# transformers==4.47.1
+# sentence-transformers==3.3.1
+
+# =========================
+# COMPUTER VISION (Optional)
+# =========================
+# opencv-python==4.10.0.84
+# pillow==11.0.0
+# albumentations==1.4.23
+# segmentation-models-pytorch==0.3.4
+
+# =========================
+# REINFORCEMENT LEARNING (Optional)
+# =========================
+# gym==0.26.2
+# stable-baselines3==2.4.0
+# tensorforce==0.6.5
 
 # ==========================================================
 # GPU INSTALLATION (RTX 3090 OPTIMIERT)

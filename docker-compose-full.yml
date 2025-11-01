@@ -1,0 +1,338 @@
+version: '3.9'
+
+services:
+  # =================================================
+  # MAIN ML TRAINING SERVICE
+  # =================================================
+  ai-dutching-ml:
+    image: pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
+    container_name: ai-dutching-ml
+    
+    # GPU Support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    # Environment Variables
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=0
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
+      - XGB_USE_GPU=1
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+      - MODEL_DIR=/workspace/models
+      - DATA_DIR=/workspace/data
+      - LOG_DIR=/workspace/logs
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Berlin
+    
+    # Volumes
+    volumes:
+      - ./workspace:/workspace
+      - ./models:/workspace/models
+      - ./data:/workspace/data
+      - ./logs:/workspace/logs
+      - ./notebooks:/workspace/notebooks
+      - ml-cache:/root/.cache
+    
+    # Shared Memory (wichtig für DataLoader)
+    shm_size: '8gb'
+    
+    # Working Directory
+    working_dir: /workspace
+    
+    # Network
+    networks:
+      - ai-network
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; assert torch.cuda.is_available()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    # Command (installiert Pakete beim Start)
+    command: |
+      bash -c "
+        echo '🚀 Starting AI-Dutching ML Container...'
+        
+        # GPU Test
+        nvidia-smi
+        
+        # Installation
+        if [ ! -f /workspace/.installed ]; then
+          echo '📦 Installing packages...'
+          bash /workspace/install_all.sh
+          touch /workspace/.installed
+        fi
+        
+        # Keep alive
+        tail -f /dev/null
+      "
+    
+    # Resources
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  # =================================================
+  # MLFLOW TRACKING SERVER
+  # =================================================
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.18.0
+    container_name: ai-dutching-mlflow
+    
+    ports:
+      - "5000:5000"
+    
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow:mlflow@postgres:5432/mlflow
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+      - MLFLOW_SERVE_ARTIFACTS=true
+    
+    volumes:
+      - mlflow-artifacts:/mlflow/artifacts
+    
+    networks:
+      - ai-network
+    
+    depends_on:
+      - postgres
+    
+    command: |
+      mlflow server 
+        --host 0.0.0.0 
+        --port 5000
+        --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow
+        --default-artifact-root /mlflow/artifacts
+    
+    restart: unless-stopped
+
+  # =================================================
+  # POSTGRESQL DATABASE
+  # =================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-dutching-postgres
+    
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=ai_dutching
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    
+    networks:
+      - ai-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    restart: unless-stopped
+
+  # =================================================
+  # REDIS CACHE
+  # =================================================
+  redis:
+    image: redis:7-alpine
+    container_name: ai-dutching-redis
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis-data:/data
+    
+    networks:
+      - ai-network
+    
+    command: redis-server --appendonly yes
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    restart: unless-stopped
+
+  # =================================================
+  # JUPYTER LAB (Optional)
+  # =================================================
+  jupyter:
+    image: jupyter/tensorflow-notebook:latest
+    container_name: ai-dutching-jupyter
+    
+    ports:
+      - "8888:8888"
+    
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=ai-dutching
+      - GRANT_SUDO=yes
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    
+    volumes:
+      - ./workspace:/home/jovyan/work
+      - ./notebooks:/home/jovyan/notebooks
+      - jupyter-data:/home/jovyan/.local
+    
+    networks:
+      - ai-network
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    restart: unless-stopped
+
+  # =================================================
+  # TENSORBOARD
+  # =================================================
+  tensorboard:
+    image: tensorflow/tensorflow:latest-gpu
+    container_name: ai-dutching-tensorboard
+    
+    ports:
+      - "6006:6006"
+    
+    volumes:
+      - ./logs:/logs
+      - ./workspace:/workspace
+    
+    networks:
+      - ai-network
+    
+    command: tensorboard --logdir=/logs --host=0.0.0.0
+    
+    restart: unless-stopped
+
+  # =================================================
+  # NGINX REVERSE PROXY (Optional)
+  # =================================================
+  nginx:
+    image: nginx:alpine
+    container_name: ai-dutching-nginx
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    
+    networks:
+      - ai-network
+    
+    depends_on:
+      - mlflow
+      - tensorboard
+      - jupyter
+    
+    restart: unless-stopped
+
+# =================================================
+# VOLUMES
+# =================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  mlflow-artifacts:
+    driver: local
+  ml-cache:
+    driver: local
+  jupyter-data:
+    driver: local
+
+# =================================================
+# NETWORKS
+# =================================================
+networks:
+  ai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+# =================================================
+# EXTRAS (Kommentiert - Bei Bedarf aktivieren)
+# =================================================
+
+# # Grafana für Monitoring
+# grafana:
+#   image: grafana/grafana:latest
+#   container_name: ai-dutching-grafana
+#   ports:
+#     - "3000:3000"
+#   environment:
+#     - GF_SECURITY_ADMIN_PASSWORD=admin
+#   volumes:
+#     - grafana-data:/var/lib/grafana
+#   networks:
+#     - ai-network
+#   restart: unless-stopped
+
+# # Prometheus für Metriken
+# prometheus:
+#   image: prom/prometheus:latest
+#   container_name: ai-dutching-prometheus
+#   ports:
+#     - "9090:9090"
+#   volumes:
+#     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#     - prometheus-data:/prometheus
+#   networks:
+#     - ai-network
+#   restart: unless-stopped
+
+# # ElasticSearch für Log-Analyse
+# elasticsearch:
+#   image: docker.elastic.co/elasticsearch/elasticsearch:8.16.0
+#   container_name: ai-dutching-elasticsearch
+#   environment:
+#     - discovery.type=single-node
+#     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#   ports:
+#     - "9200:9200"
+#   volumes:
+#     - es-data:/usr/share/elasticsearch/data
+#   networks:
+#     - ai-network
+#   restart: unless-stopped
+
+# # Kibana für Visualisierung
+# kibana:
+#   image: docker.elastic.co/kibana/kibana:8.16.0
+#   container_name: ai-dutching-kibana
+#   ports:
+#     - "5601:5601"
+#   environment:
+#     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#   networks:
+#     - ai-network
+#   depends_on:
+#     - elasticsearch
+#   restart: unless-stopped

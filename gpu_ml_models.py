@@ -25,6 +25,15 @@ Performance:
 
 import numpy as np
 import pandas as pd
+
+# XGBoost mit GPU-Support
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    XGBOOST_AVAILABLE = False
+    print("⚠️ XGBoost nicht installiert. pip install xgboost")
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -38,15 +47,6 @@ import pickle
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
-
-# XGBoost mit GPU-Support
-try:
-    import xgboost as xgb
-    XGBOOST_AVAILABLE = True
-except ImportError:
-    XGBOOST_AVAILABLE = False
-    print("⚠️ XGBoost nicht installiert. pip install xgboost")
-
 
 # ==========================================================
 # GPU CONFIGURATION & DETECTION
@@ -271,7 +271,8 @@ class GPUMatchPredictionNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         logits = self.network(x)
-        return torch.softmax(logits, dim=1)
+        # KORREKTUR: Softmax wird entfernt, da nn.CrossEntropyLoss es intern berechnet
+        return logits
 
 
 class GPUNeuralNetworkPredictor:
@@ -287,10 +288,16 @@ class GPUNeuralNetworkPredictor:
         self,
         input_size: int = 20,
         hidden_sizes: List[int] = [256, 128, 64],
-        gpu_config: GPUConfig = None
+        gpu_config: GPUConfig = None,
+        # KORREKTUR: Parameter hier hinzugefügt
+        learning_rate: float = 0.001,
+        early_stopping_patience: int = 15
     ):
         self.config = gpu_config or GPUConfig()
         self.device = self.config.device
+        
+        # KORREKTUR: Patience speichern
+        self.patience = early_stopping_patience
 
         # Model
         self.model = GPUMatchPredictionNet(input_size, hidden_sizes).to(self.device)
@@ -298,7 +305,8 @@ class GPUNeuralNetworkPredictor:
         # Optimizer mit Weight Decay
         self.optimizer = optim.AdamW(
             self.model.parameters(),
-            lr=0.001,
+            # KORREKTUR: Parameter verwenden
+            lr=learning_rate,
             weight_decay=0.01
         )
 
@@ -307,51 +315,37 @@ class GPUNeuralNetworkPredictor:
             self.optimizer,
             mode='min',
             factor=0.5,
-            patience=5
+            patience=5 # Interne Scheduler-Patience (anders als Early Stopping)
         )
 
-        # Loss
+        # Loss (erwartet Logits, nicht Softmax)
         self.criterion = nn.CrossEntropyLoss()
 
         # Mixed Precision Scaler
         self.scaler = GradScaler() if self.config.use_mixed_precision else None
 
         self.is_trained = False
-        self.training_history = []
+        self.training_history = {} # Besser als Diktat
+        self.best_val_acc = 0.0
 
     def train(
         self,
-        X: np.ndarray,
-        y: np.ndarray,
+        X_train_t: torch.Tensor, # Erwarte bereits Tensoren
+        y_train_t: torch.Tensor, # Erwarte bereits Tensoren
         epochs: int = 100,
         batch_size: int = None,
-        validation_split: float = 0.2,
+        # KORREKTUR: 'validation_split' ersetzt durch 'validation_data'
+        validation_data: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         verbose: bool = True
     ):
         """
         GPU-beschleunigtes Training mit Mixed Precision
-
-        Performance auf RTX 3090:
-        - ~500-1000 samples/sec mit FP32
-        - ~1000-2000 samples/sec mit FP16 (Mixed Precision)
         """
         if batch_size is None:
             batch_size = self.config.get_optimal_batch_size('medium')
 
-        # Train/Val Split
-        val_size = int(len(X) * validation_split)
-        indices = np.random.permutation(len(X))
-
-        train_idx, val_idx = indices[val_size:], indices[:val_size]
-        X_train, y_train = X[train_idx], y[train_idx]
-        X_val, y_val = X[val_idx], y[val_idx]
-
-        # Convert zu Tensors
-        X_train_t = torch.FloatTensor(X_train).to(self.device)
-        y_train_t = torch.LongTensor(y_train).to(self.device)
-        X_val_t = torch.FloatTensor(X_val).to(self.device)
-        y_val_t = torch.LongTensor(y_val).to(self.device)
-
+        # KORREKTUR: Interner Split entfernt. Wir verwenden die Daten aus train_ml_models.py
+        
         # DataLoader
         train_dataset = TensorDataset(X_train_t, y_train_t)
         train_loader = DataLoader(
@@ -361,12 +355,21 @@ class GPUNeuralNetworkPredictor:
             pin_memory=False,
             num_workers=0  # Windows kompatibel
         )
+        
+        # Hole Validierungsdaten
+        if validation_data:
+            X_val_t, y_val_t = validation_data
+            if verbose:
+                print(f"   Validation Samples: {len(X_val_t)}")
+        else:
+            if verbose:
+                print("   Keine Validierungsdaten übergeben.")
+
 
         if verbose:
             print(f"\n🚀 GPU Training gestartet:")
             print(f"   Device: {self.device}")
-            print(f"   Training Samples: {len(X_train)}")
-            print(f"   Validation Samples: {len(X_val)}")
+            print(f"   Training Samples: {len(X_train_t)}")
             print(f"   Batch Size: {batch_size}")
             print(f"   Epochs: {epochs}")
             print(f"   Mixed Precision: {self.config.use_mixed_precision}")
@@ -374,7 +377,10 @@ class GPUNeuralNetworkPredictor:
 
         best_val_loss = float('inf')
         patience_counter = 0
-        max_patience = 15
+        # KORREKTUR: Hartkodierten Wert durch Parameter ersetzt
+        max_patience = self.patience 
+
+        history_log = {'train_loss': [], 'val_loss': [], 'val_accuracy': []}
 
         for epoch in range(epochs):
             # Training
@@ -384,82 +390,92 @@ class GPUNeuralNetworkPredictor:
             for batch_x, batch_y in train_loader:
                 self.optimizer.zero_grad()
 
-                # Mixed Precision Forward Pass
                 if self.config.use_mixed_precision and self.scaler:
                     with autocast():
                         outputs = self.model(batch_x)
                         loss = self.criterion(outputs, batch_y)
-
-                    # Scaled Backward Pass
                     self.scaler.scale(loss).backward()
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                 else:
-                    # Standard Forward Pass
                     outputs = self.model(batch_x)
                     loss = self.criterion(outputs, batch_y)
                     loss.backward()
                     self.optimizer.step()
 
                 train_loss += loss.item()
+            
+            avg_train_loss = train_loss / len(train_loader)
+            history_log['train_loss'].append(avg_train_loss)
 
             # Validation
-            self.model.eval()
-            with torch.no_grad():
-                if self.config.use_mixed_precision:
-                    with autocast():
+            val_loss_item = 0.0
+            val_acc = 0.0
+            
+            if validation_data:
+                self.model.eval()
+                with torch.no_grad():
+                    if self.config.use_mixed_precision:
+                        with autocast():
+                            val_outputs = self.model(X_val_t)
+                            val_loss = self.criterion(val_outputs, y_val_t)
+                    else:
                         val_outputs = self.model(X_val_t)
                         val_loss = self.criterion(val_outputs, y_val_t)
-                else:
-                    val_outputs = self.model(X_val_t)
-                    val_loss = self.criterion(val_outputs, y_val_t)
 
-                val_preds = val_outputs.argmax(dim=1)
-                val_acc = (val_preds == y_val_t).float().mean().item()
+                    val_preds = val_outputs.argmax(dim=1)
+                    val_acc = (val_preds == y_val_t).float().mean().item()
+                    val_loss_item = val_loss.item()
+                
+                history_log['val_loss'].append(val_loss_item)
+                history_log['val_accuracy'].append(val_acc)
 
-            avg_train_loss = train_loss / len(train_loader)
-
-            # Learning Rate Scheduling
-            self.scheduler.step(val_loss)
-
-            # Save History
-            self.training_history.append({
-                'epoch': epoch + 1,
-                'train_loss': avg_train_loss,
-                'val_loss': val_loss.item(),
-                'val_accuracy': val_acc
-            })
-
+                # Learning Rate Scheduling
+                self.scheduler.step(val_loss_item)
+            
             # Verbose Output
             if verbose and (epoch + 1) % 10 == 0:
                 current_lr = self.optimizer.param_groups[0]['lr']
-                print(f"Epoch {epoch+1:3d}/{epochs} | "
-                      f"Train Loss: {avg_train_loss:.4f} | "
-                      f"Val Loss: {val_loss.item():.4f} | "
-                      f"Val Acc: {val_acc:.4f} | "
-                      f"LR: {current_lr:.6f}")
+                if validation_data:
+                    print(f"Epoch {epoch+1:3d}/{epochs} | "
+                          f"Train Loss: {avg_train_loss:.4f} | "
+                          f"Val Loss: {val_loss_item:.4f} | "
+                          f"Val Acc: {val_acc:.4f} | "
+                          f"LR: {current_lr:.6f}")
+                else:
+                     print(f"Epoch {epoch+1:3d}/{epochs} | "
+                          f"Train Loss: {avg_train_loss:.4f} | "
+                          f"LR: {current_lr:.6f}")
 
             # Early Stopping
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                patience_counter = 0
-                # Save Best Model
-                self._save_checkpoint('best_model')
-            else:
-                patience_counter += 1
+            if validation_data:
+                if val_loss_item < best_val_loss:
+                    best_val_loss = val_loss_item
+                    self.best_val_acc = val_acc # KORREKTUR: Beste Acc speichern
+                    patience_counter = 0
+                    self._save_checkpoint('best_model')
+                else:
+                    patience_counter += 1
 
-            if patience_counter >= max_patience:
-                if verbose:
-                    print(f"\n⏹️  Early Stopping at Epoch {epoch+1}")
-                break
+                if patience_counter >= max_patience:
+                    if verbose:
+                        print(f"\n⏹️  Early Stopping at Epoch {epoch+1}")
+                    break
+            else:
+                # Ohne Validierung speichern wir einfach das letzte Modell
+                self._save_checkpoint('best_model')
+
 
         self.is_trained = True
+        self.training_history = history_log
+        self.training_history['best_val_acc'] = self.best_val_acc # Am Ende hinzufügen
 
         if verbose:
             print(f"{'='*60}")
             print(f"✅ Training abgeschlossen!")
-            print(f"   Best Val Loss: {best_val_loss:.4f}")
-            print(f"   Final Val Accuracy: {val_acc:.4f}")
+            if validation_data:
+                print(f"   Best Val Loss: {best_val_loss:.4f}")
+                print(f"   Best Val Accuracy: {self.best_val_acc:.4f}")
             self.config.print_memory_stats()
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
@@ -474,10 +490,12 @@ class GPUNeuralNetworkPredictor:
 
             if self.config.use_mixed_precision:
                 with autocast():
-                    probs = self.model(X_tensor)
+                    logits = self.model(X_tensor)
             else:
-                probs = self.model(X_tensor)
-
+                logits = self.model(X_tensor)
+        
+        # KORREKTUR: Softmax hier anwenden, da es aus forward entfernt wurde
+        probs = torch.softmax(logits, dim=1)
         return probs.cpu().numpy()
 
     def _save_checkpoint(self, name: str = 'checkpoint'):
@@ -490,7 +508,8 @@ class GPUNeuralNetworkPredictor:
             'optimizer_state_dict': self.optimizer.state_dict(),
             'scheduler_state_dict': self.scheduler.state_dict(),
             'training_history': self.training_history,
-            'is_trained': self.is_trained
+            'is_trained': self.is_trained,
+            'best_val_acc': self.best_val_acc # Hinzugefügt
         }
 
         if self.scaler:
@@ -512,6 +531,7 @@ class GPUNeuralNetworkPredictor:
         self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         self.training_history = checkpoint['training_history']
         self.is_trained = checkpoint['is_trained']
+        self.best_val_acc = checkpoint.get('best_val_acc', 0.0) # Hinzugefügt
 
         if self.scaler and 'scaler_state_dict' in checkpoint:
             self.scaler.load_state_dict(checkpoint['scaler_state_dict'])
@@ -528,22 +548,31 @@ class GPUXGBoostPredictor:
     Fällt automatisch auf CPU ('hist') zurück, falls GPU-Build fehlt.
     """
 
-    def __init__(self, use_gpu: bool = True):
+    def __init__(
+        self, 
+        use_gpu: bool = True,
+        # KORREKTUR: Parameter hier hinzugefügt
+        n_estimators: int = 300,
+        max_depth: int = 8,
+        learning_rate: float = 0.05,
+        early_stopping_rounds: Optional[int] = None  # <--- HIERHIN VERSCHOBEN
+    ):
         if not XGBOOST_AVAILABLE:
             raise ImportError("XGBoost nicht installiert!")
 
-        # Wir gehen optimistisch davon aus, dass die GPU funktioniert.
         self.use_gpu = use_gpu and torch.cuda.is_available()
         self.tree_method = 'gpu_hist' if self.use_gpu else 'hist'
         self.predictor = 'gpu_predictor' if self.use_gpu else 'auto'
         
+        # KORREKTUR: Hartkodierte Werte durch Parameter ersetzt
         self.model = xgb.XGBClassifier(
             objective='multi:softprob',
             num_class=3,
             tree_method=self.tree_method,
-            max_depth=8,
-            learning_rate=0.05,
-            n_estimators=300,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
+            early_stopping_rounds=early_stopping_rounds, # <--- HIER GESETZT
             subsample=0.8,
             colsample_bytree=0.8,
             random_state=42,
@@ -552,13 +581,23 @@ class GPUXGBoostPredictor:
             max_bin=256
         )
         self.is_trained = False
+        self.params_at_init = self.model.get_params() # Speichern für CPU-Fallback
 
         if self.use_gpu:
             print("🚀 XGBoost GPU-Modus (Versuch wird gestartet)...")
         else:
             print("ℹ️  XGBoost CPU-Modus.")
 
-    def train(self, X: np.ndarray, y: np.ndarray, verbose: bool = True):
+    def train(
+        self, 
+        X: np.ndarray, 
+        y: np.ndarray, 
+        # KORREKTUR: Parameter für Early Stopping hinzugefügt
+        X_val: Optional[np.ndarray] = None,
+        y_val: Optional[np.ndarray] = None,
+        # early_stopping_rounds HIER ENTFERNT
+        verbose: bool = True
+    ):
             """
             Trainiert das Modell (auf GPU oder CPU, je nach __init__)
             """
@@ -568,11 +607,26 @@ class GPUXGBoostPredictor:
                 print(f"   Features: {X.shape[1]}")
                 print(f"   Methode (Versuch): {self.model.get_params()['tree_method']}")
 
+            # Setup für Early Stopping
+            fit_params = {}
+            # KORREKTUR: Wir prüfen nur auf eval_set. early_stopping_rounds ist schon im Modell.
+            if X_val is not None and y_val is not None:
+                eval_set = [(X, y), (X_val, y_val)] # Füge auch Trainingsdaten hinzu für mlogloss-Vergleich
+                fit_params['eval_set'] = eval_set
+                fit_params['verbose'] = verbose
+                if verbose:
+                     # Holen die Info aus dem Modell, ob Early Stopping gesetzt ist
+                    rounds = self.model.get_params().get('early_stopping_rounds')
+                    if rounds:
+                        print(f"   Early Stopping: Aktiviert (Rounds={rounds})")
+            else:
+                fit_params['verbose'] = False # Kein Spam, wenn kein Early Stopping
+                
             try:
                 # === HAUPT-VERSUCH (GPU) ===
-                self.model.fit(X, y, verbose=verbose)
+                # KORREKTUR: 'early_stopping_rounds' ist HIER WEG
+                self.model.fit(X, y, **fit_params)
                 
-            # === KORREKTUR HIER: "xgboost." zu "xgb." geändert ===
             except xgb.core.XGBoostError as e:
                 # === FEHLERBEHANDLUNG: FALLBACK AUF CPU ===
                 if "not compiled with GPU support" in str(e) or "Invalid Input: 'gpu_hist'" in str(e):
@@ -582,28 +636,19 @@ class GPUXGBoostPredictor:
                     print("   Neuer Versuch mit tree_method='hist' (CPU)...")
                     print("="*60 + "\n")
                     
-                    # Setze auf CPU zurück und versuche es erneut
                     self.use_gpu = False
                     self.tree_method = 'hist'
                     self.predictor = 'auto'
                     
-                    self.model = xgb.XGBClassifier(
-                        objective='multi:softprob',
-                        num_class=3,
-                        tree_method=self.tree_method, # Jetzt 'hist'
-                        max_depth=8,
-                        learning_rate=0.05,
-                        n_estimators=300,
-                        subsample=0.8,
-                        colsample_bytree=0.8,
-                        random_state=42,
-                        eval_metric='mlogloss',
-                        predictor=self.predictor,
-                        max_bin=256
-                    )
+                    # Erstelle Modell neu mit gespeicherten Init-Params, aber neuer tree_method
+                    new_params = self.params_at_init.copy()
+                    new_params['tree_method'] = self.tree_method
+                    new_params['predictor'] = self.predictor
+                    
+                    self.model = xgb.XGBClassifier(**new_params)
                     
                     # Zweiter Versuch mit CPU
-                    self.model.fit(X, y, verbose=verbose)
+                    self.model.fit(X, y, **fit_params)
                 else:
                     # Wenn es ein anderer XGBoost-Fehler ist, wirf ihn
                     raise e
@@ -637,6 +682,7 @@ class GPUXGBoostPredictor:
         
         min_len = min(len(feature_names), len(importance))
         return dict(zip(feature_names[:min_len], importance[:min_len]))
+
                 
 # ==========================================================
 # EXAMPLE & TESTING

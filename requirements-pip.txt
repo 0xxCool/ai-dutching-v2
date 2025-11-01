@@ -1,0 +1,32 @@
+# Core & Utils
+requests>=2.31.0
+python-dotenv>=1.0.0
+rapidfuzz>=3.0.0
+
+# API & Caching
+aiohttp>=3.8.0
+diskcache>=5.6.0
+redis>=4.6.0
+
+# Dashboard & Visualization
+streamlit>=1.25.0
+plotly>=5.15.0
+seaborn>=0.12.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+
+# Logging & Monitoring
+loguru>=0.7.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# Alerts
+python-telegram-bot>=20.0
+discord-webhook>=1.0.0
+
+# Development
+black>=23.0.0
+pytest>=7.4.0
