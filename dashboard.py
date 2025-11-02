@@ -1237,6 +1237,11 @@ def main():
             min_probability = st.slider("Min Probability (%)", 0.0, 20.0, 3.0, 0.5, key="cs_min_prob")
 
             if st.button("💾 Save CS Config", key="save_cs_config"):
+                st.session_state.cs_config = {
+                    'min_value_edge': min_value_edge,
+                    'max_odds': max_odds,
+                    'min_probability': min_probability
+                }
                 st.success("✅ Konfiguration gespeichert!")
 
         with col2:
