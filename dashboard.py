@@ -86,7 +86,7 @@ from alert_system import AlertManager, AlertConfig, Alert, AlertLevel, AlertType
 from portfolio_manager import PortfolioManager
 from api_cache_system import FileCache as APICache, CacheConfig
 from continuous_training_system import ModelRegistry, ContinuousTrainingEngine
-from backtesting_framework import Backtester as BacktestingEngine
+from backtesting_framework import Backtester, BacktestConfig
 
 # =============================================================================
 # PAGE CONFIGURATION
@@ -459,8 +459,13 @@ def init_session_state():
                 'dutching': 'idle',
                 'ml_training': 'idle',
                 'portfolio': 'idle',
-                'alerts': 'idle'
+                'alerts': 'idle',
+                'correct_score': 'idle'
             }
+
+        # Correct Score Logs
+        if 'correct_score_logs' not in st.session_state:
+            st.session_state.correct_score_logs = []
 
         # Initialize Components - nur einmal
         if 'components_initialized' not in st.session_state:
@@ -530,14 +535,16 @@ def get_gpu_stats() -> Optional[Dict]:
             # Temperature
             try:
                 temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
-            except:
+            except (pynvml.NVMLError, Exception) as e:
+                logging.warning(f"Could not get GPU temperature: {e}")
                 temp = 0
-            
+
             # Power
             try:
                 power = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000  # Watt
                 power_limit = pynvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
-            except:
+            except (pynvml.NVMLError, Exception) as e:
+                logging.warning(f"Could not get GPU power: {e}")
                 power = 0
                 power_limit = 0
             
@@ -1115,19 +1122,65 @@ def main():
                     if not data_file.exists():
                         st.warning("⚠️ Keine Daten gefunden. Bitte starten Sie zuerst den Scraper.")
                     else:
-                        # Initialize backtester
-                        from backtesting_framework import Backtester, BacktestConfig
+                        # Load historical data
+                        try:
+                            historical_data = pd.read_csv(data_file)
 
+                            # Filter by date range
+                            if 'date' in historical_data.columns:
+                                historical_data['date'] = pd.to_datetime(historical_data['date'])
+                                historical_data = historical_data[
+                                    (historical_data['date'] >= pd.to_datetime(start_date)) &
+                                    (historical_data['date'] <= pd.to_datetime(end_date))
+                                ]
+
+                            if len(historical_data) == 0:
+                                st.warning("⚠️ Keine Daten im gewählten Zeitraum gefunden.")
+                                raise ValueError("No data in selected date range")
+
+                        except Exception as e:
+                            logging.error(f"Error loading data: {e}")
+                            st.error(f"Fehler beim Laden der Daten: {e}")
+                            raise
+
+                        # Initialize backtester with correct parameters
                         backtest_config = BacktestConfig(
-                            start_date=start_date,
-                            end_date=end_date,
                             initial_bankroll=float(initial_balance),
-                            strategy_type=strategy.lower().replace(" ", "_")
+                            kelly_cap=0.25,
+                            min_edge=0.05
                         )
 
                         backtester = Backtester(config=backtest_config)
 
-                        # Run backtest
+                        # Define prediction function based on strategy
+                        def prediction_func(row: pd.Series) -> Dict:
+                            """Simple prediction function for backtesting"""
+                            try:
+                                # Basic value betting logic
+                                predictions = {}
+
+                                # Use xG if available
+                                if 'home_xg' in row and 'away_xg' in row:
+                                    home_prob = row['home_xg'] / (row['home_xg'] + row['away_xg'] + 0.3)
+                                    away_prob = row['away_xg'] / (row['home_xg'] + row['away_xg'] + 0.3)
+                                else:
+                                    # Fallback to basic odds conversion
+                                    home_prob = 0.33
+                                    away_prob = 0.33
+
+                                predictions = {
+                                    'market': '1X2',
+                                    'selection': 'Home' if home_prob > away_prob else 'Away',
+                                    'probability': max(home_prob, away_prob),
+                                    'odds': row.get('odds_home', 2.0) if home_prob > away_prob else row.get('odds_away', 2.0)
+                                }
+
+                                return predictions
+                            except Exception as e:
+                                logging.error(f"Prediction error for row: {e}")
+                                return {}
+
+                        # Run backtest with correct parameters
                         progress = st.progress(0)
                         results = None
 
@@ -1138,7 +1191,23 @@ def main():
                             if i == 50:
                                 # Run actual backtest in middle of progress
                                 try:
-                                    results = backtester.run_backtest()
+                                    backtest_result = backtester.run_backtest(
+                                        historical_data=historical_data,
+                                        prediction_func=prediction_func
+                                    )
+
+                                    # Convert BacktestResult to dict for display
+                                    results = {
+                                        'total_return': backtest_result.total_profit,
+                                        'roi': backtest_result.roi,
+                                        'win_rate': backtest_result.win_rate * 100,
+                                        'max_drawdown': backtest_result.max_drawdown_percent,
+                                        'sharpe_ratio': backtest_result.sharpe_ratio,
+                                        'total_bets': backtest_result.total_bets,
+                                        'winning_bets': backtest_result.winning_bets,
+                                        'final_bankroll': backtest_result.final_bankroll
+                                    }
+
                                 except Exception as e:
                                     logging.error(f"Backtest execution error: {e}")
                                     st.error(f"Fehler beim Backtest: {e}")
@@ -1211,10 +1280,7 @@ def main():
                         cwd = str(Path.cwd())
                         command = ['python', 'sportmonks_correct_score_system.py']
                         st.session_state.log_manager.start_process('correct_score', command, cwd=cwd)
-                        if 'correct_score' not in st.session_state.process_states:
-                            st.session_state.process_states['correct_score'] = 'running'
-                        else:
-                            st.session_state.process_states['correct_score'] = 'running'
+                        st.session_state.process_states['correct_score'] = 'running'
                         st.success("🚀 Correct Score System gestartet!")
                     except Exception as e:
                         st.error(f"❌ Fehler beim Starten: {e}")
@@ -1246,10 +1312,6 @@ def main():
 
         with col2:
             st.markdown("### 📜 Live Logs")
-
-            # Initialize correct_score_logs if not exists
-            if 'correct_score_logs' not in st.session_state:
-                st.session_state.correct_score_logs = []
 
             # Update and display logs
             cs_log_container = st.container()
@@ -1398,12 +1460,12 @@ with st.sidebar:
 # Auto-Refresh für Live Logs und Daten
 if st.session_state.auto_refresh:
     time_since_refresh = (datetime.now() - st.session_state.last_refresh).seconds
-    
+
     # Update logs continuously without full page refresh
-    for process_name in ['scraper', 'dutching', 'ml_training', 'portfolio', 'alerts']:
+    for process_name in st.session_state.process_states.keys():
         if st.session_state.log_manager.is_running(process_name):
             update_logs(process_name)
-    
+
     # Full refresh at interval
     if time_since_refresh >= st.session_state.refresh_interval:
         st.session_state.last_refresh = datetime.now()

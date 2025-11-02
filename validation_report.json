@@ -1,0 +1,323 @@
+{
+  "results": {
+    "alert_system.py": {
+      "path": "/home/user/ai-dutching-v2/alert_system.py",
+      "name": "alert_system.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'AlertLevel' has no methods",
+        "\u26a0\ufe0f  Class 'AlertType' has no methods",
+        "\u26a0\ufe0f  Class 'AlertConfig' has no methods",
+        "\u26a0\ufe0f  Expected class/function 'AlertSystem' not found"
+      ],
+      "status": "PASS"
+    },
+    "api_cache_system.py": {
+      "path": "/home/user/ai-dutching-v2/api_cache_system.py",
+      "name": "api_cache_system.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'CacheConfig' has no methods",
+        "\u26a0\ufe0f  Expected class/function 'CacheSystem' not found",
+        "\u26a0\ufe0f  Expected class/function 'APICache' not found"
+      ],
+      "status": "PASS"
+    },
+    "backtesting_framework.py": {
+      "path": "/home/user/ai-dutching-v2/backtesting_framework.py",
+      "name": "backtesting_framework.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'BacktestConfig' has no methods",
+        "\u26a0\ufe0f  Class 'Bet' has no methods",
+        "\u26a0\ufe0f  Class 'BacktestResult' has no methods",
+        "\u26a0\ufe0f  Expected class/function 'BacktestingFramework' not found"
+      ],
+      "status": "PASS"
+    },
+    "cashout_optimizer.py": {
+      "path": "/home/user/ai-dutching-v2/cashout_optimizer.py",
+      "name": "cashout_optimizer.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u26a0\ufe0f  Import issues found",
+        "classes": "\u26a0\ufe0f  Class issues found"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Import 'torch.optim' may not be available",
+        "\u26a0\ufe0f  Import 'torch.nn' may not be available",
+        "\u26a0\ufe0f  Class 'CashoutConfig' has no methods",
+        "\u26a0\ufe0f  Class 'BetState' has no methods"
+      ],
+      "status": "PASS"
+    },
+    "continuous_training_system.py": {
+      "path": "/home/user/ai-dutching-v2/continuous_training_system.py",
+      "name": "continuous_training_system.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Expected class/function 'ContinuousTraining' not found"
+      ],
+      "status": "PASS"
+    },
+    "dashboard.py": {
+      "path": "/home/user/ai-dutching-v2/dashboard.py",
+      "name": "dashboard.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u26a0\ufe0f  Import issues found",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Import 'plotly.graph_objects' may not be available",
+        "\u26a0\ufe0f  Import 'plotly.express' may not be available"
+      ],
+      "status": "PASS"
+    },
+    "gpu_deep_rl_cashout.py": {
+      "path": "/home/user/ai-dutching-v2/gpu_deep_rl_cashout.py",
+      "name": "gpu_deep_rl_cashout.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u26a0\ufe0f  Import issues found",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Import 'torch.optim' may not be available",
+        "\u26a0\ufe0f  Import 'torch.nn' may not be available",
+        "\u26a0\ufe0f  Import 'torch.nn.functional' may not be available"
+      ],
+      "status": "PASS"
+    },
+    "gpu_ml_models.py": {
+      "path": "/home/user/ai-dutching-v2/gpu_ml_models.py",
+      "name": "gpu_ml_models.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u26a0\ufe0f  Import issues found",
+        "classes": "\u2705 Class interfaces valid",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Import 'torch.optim' may not be available",
+        "\u26a0\ufe0f  Import 'torch.nn' may not be available",
+        "\u26a0\ufe0f  Expected class/function 'GPUMLModels' not found"
+      ],
+      "status": "PASS"
+    },
+    "gpu_performance_monitor.py": {
+      "path": "/home/user/ai-dutching-v2/gpu_performance_monitor.py",
+      "name": "gpu_performance_monitor.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    },
+    "optimized_poisson_model.py": {
+      "path": "/home/user/ai-dutching-v2/optimized_poisson_model.py",
+      "name": "optimized_poisson_model.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'PoissonConfig' has no methods"
+      ],
+      "status": "PASS"
+    },
+    "portfolio_manager.py": {
+      "path": "/home/user/ai-dutching-v2/portfolio_manager.py",
+      "name": "portfolio_manager.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u2705 Critical interfaces present"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'PortfolioConfig' has no methods"
+      ],
+      "status": "PASS"
+    },
+    "simple_dashboard.py": {
+      "path": "/home/user/ai-dutching-v2/simple_dashboard.py",
+      "name": "simple_dashboard.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    },
+    "sportmonks_correct_score_scraper.py": {
+      "path": "/home/user/ai-dutching-v2/sportmonks_correct_score_scraper.py",
+      "name": "sportmonks_correct_score_scraper.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    },
+    "sportmonks_correct_score_system.py": {
+      "path": "/home/user/ai-dutching-v2/sportmonks_correct_score_system.py",
+      "name": "sportmonks_correct_score_system.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'CorrectScoreConfig' has no methods",
+        "\u26a0\ufe0f  Class 'TeamMatcher' might need __init__ method",
+        "\u26a0\ufe0f  Class 'ResultFormatter' might need __init__ method",
+        "\u26a0\ufe0f  Expected class/function 'CorrectScoreSystem' not found"
+      ],
+      "status": "PASS"
+    },
+    "sportmonks_dutching_system.py": {
+      "path": "/home/user/ai-dutching-v2/sportmonks_dutching_system.py",
+      "name": "sportmonks_dutching_system.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'Config' has no methods",
+        "\u26a0\ufe0f  Class 'TeamMatcher' might need __init__ method",
+        "\u26a0\ufe0f  Class 'ResultFormatter' might need __init__ method",
+        "\u26a0\ufe0f  Expected class/function 'DutchingSystem' not found",
+        "\u26a0\ufe0f  Expected class/function 'calculate_odds' not found"
+      ],
+      "status": "PASS"
+    },
+    "sportmonks_hybrid_scraper_v3_FINAL.py": {
+      "path": "/home/user/ai-dutching-v2/sportmonks_hybrid_scraper_v3_FINAL.py",
+      "name": "sportmonks_hybrid_scraper_v3_FINAL.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'HybridScraperConfig' has no methods"
+      ],
+      "status": "PASS"
+    },
+    "test_xgboost_gpu.py": {
+      "path": "/home/user/ai-dutching-v2/test_xgboost_gpu.py",
+      "name": "test_xgboost_gpu.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    },
+    "train_ml_models.py": {
+      "path": "/home/user/ai-dutching-v2/train_ml_models.py",
+      "name": "train_ml_models.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u26a0\ufe0f  Import issues found",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "critical": "\u26a0\ufe0f  Missing critical interfaces"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Import 'torch.nn' may not be available",
+        "\u26a0\ufe0f  Class 'TrainingConfig' has no methods",
+        "\u26a0\ufe0f  Expected class/function 'train_models' not found",
+        "\u26a0\ufe0f  Expected class/function 'MLModelTrainer' not found"
+      ],
+      "status": "PASS"
+    },
+    "unified_config.py": {
+      "path": "/home/user/ai-dutching-v2/unified_config.py",
+      "name": "unified_config.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u26a0\ufe0f  Class issues found",
+        "config": "\u26a0\ufe0f  Config issues found"
+      },
+      "issues": [
+        "\u26a0\ufe0f  Class 'DatabaseConfig' has no methods",
+        "\u26a0\ufe0f  Class 'APIConfig' has no methods",
+        "\u26a0\ufe0f  Class 'CacheConfig' has no methods",
+        "\u26a0\ufe0f  Class 'MLConfig' has no methods",
+        "\u26a0\ufe0f  Class 'DutchingConfig' has no methods",
+        "\u26a0\ufe0f  Class 'CashoutConfig' has no methods",
+        "\u26a0\ufe0f  Class 'PortfolioConfig' has no methods",
+        "\u26a0\ufe0f  Class 'AlertConfig' has no methods",
+        "\u26a0\ufe0f  Class 'BacktestConfig' has no methods",
+        "\u26a0\ufe0f  Class 'CorrectScoreConfig' has no methods",
+        "\u26a0\ufe0f  Class 'GPUConfig' has no methods",
+        "\u26a0\ufe0f  Class 'ContinuousTrainingConfig' has no methods",
+        "\u26a0\ufe0f  Class 'LeaguesConfig' has no methods",
+        "\u26a0\ufe0f  Class 'ConfigManager' might need __init__ method",
+        "\u26a0\ufe0f  Missing required config class: BettingConfig"
+      ],
+      "status": "PASS"
+    },
+    "validate_repository.py": {
+      "path": "/home/user/ai-dutching-v2/validate_repository.py",
+      "name": "validate_repository.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    },
+    "verify_installation.py": {
+      "path": "/home/user/ai-dutching-v2/verify_installation.py",
+      "name": "verify_installation.py",
+      "checks": {
+        "syntax": "\u2705 Syntax valid",
+        "imports": "\u2705 All imports valid",
+        "classes": "\u2705 Class interfaces valid"
+      },
+      "issues": [],
+      "status": "PASS"
+    }
+  },
+  "circular_dependencies": [],
+  "confidence_score": 83.9,
+  "summary": {
+    "total_files": 21,
+    "passed": 21,
+    "failed": 0,
+    "files_with_issues": 15
+  }
+}
