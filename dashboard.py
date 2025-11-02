@@ -416,10 +416,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# SESSION STATE INITIALIZATION (ENHANCED & OPTIMIZED)
+# SESSION STATE INITIALIZATION (ENHANCED & DEBUGGED)
 # =============================================================================
 def init_session_state():
     """Initialize session state with all required components"""
+
+    # Debug Flag
+    if 'debug_mode' not in st.session_state:
+        st.session_state.debug_mode = True  # Aktiviere Debug während Entwicklung
+
+    initialization_errors = []
+
     try:
         # Basic state
         if 'last_refresh' not in st.session_state:
@@ -435,10 +442,20 @@ def init_session_state():
         if 'system_alerts' not in st.session_state:
             st.session_state.system_alerts = []
 
-        # Log Stream Manager - nur einmal initialisieren
+        # Log Stream Manager - KRITISCH für Button-Funktionalität
         if 'log_manager' not in st.session_state:
-            st.session_state.log_manager = LogStreamManager()
-            logging.info("LogStreamManager initialized")
+            try:
+                st.session_state.log_manager = LogStreamManager()
+                logging.info("✅ LogStreamManager initialized")
+                if st.session_state.debug_mode:
+                    st.sidebar.success("✅ LogStreamManager OK")
+            except Exception as e:
+                error_msg = f"❌ LogStreamManager Fehler: {e}"
+                initialization_errors.append(error_msg)
+                logging.error(error_msg)
+                st.error(error_msg)
+                # Erstelle einen Dummy LogStreamManager damit Dashboard nicht crasht
+                st.session_state.log_manager = None
 
         # Log Buffers
         if 'scraper_logs' not in st.session_state:
@@ -469,38 +486,125 @@ def init_session_state():
 
         # Initialize Components - nur einmal
         if 'components_initialized' not in st.session_state:
-            config = get_config()
+            try:
+                config = get_config()
+                if st.session_state.debug_mode:
+                    st.sidebar.info("✅ Config loaded")
 
-            # API Token
-            api_token = config.api.api_token
-            dutching_config_instance = DutchingConfig()
+                # API Token
+                api_token = config.api.api_token
+                if not api_token:
+                    warning_msg = "⚠️ SPORTMONKS_API_TOKEN nicht gesetzt in .env"
+                    initialization_errors.append(warning_msg)
+                    logging.warning(warning_msg)
+                    if st.session_state.debug_mode:
+                        st.sidebar.warning(warning_msg)
+                    api_token = "dummy_token"  # Fallback
 
-            # Sportmonks Client
-            st.session_state.sportmonks_client = SportmonksClient(
-                api_token=api_token,
-                config=dutching_config_instance
-            )
+                dutching_config_instance = DutchingConfig()
 
-            # Portfolio Manager
-            st.session_state.portfolio_manager = PortfolioManager(bankroll=10000.0)
+                # Sportmonks Client
+                try:
+                    st.session_state.sportmonks_client = SportmonksClient(
+                        api_token=api_token,
+                        config=dutching_config_instance
+                    )
+                    if st.session_state.debug_mode:
+                        st.sidebar.success("✅ SportmonksClient OK")
+                except Exception as e:
+                    error_msg = f"❌ SportmonksClient Fehler: {e}"
+                    initialization_errors.append(error_msg)
+                    logging.error(error_msg)
+                    st.session_state.sportmonks_client = None
+                    if st.session_state.debug_mode:
+                        st.sidebar.error(error_msg)
 
-            # Alert Manager
-            alert_config = AlertConfig()
-            st.session_state.alert_manager = AlertManager(alert_config)
+                # Portfolio Manager
+                try:
+                    st.session_state.portfolio_manager = PortfolioManager(bankroll=10000.0)
+                    if st.session_state.debug_mode:
+                        st.sidebar.success("✅ PortfolioManager OK")
+                except Exception as e:
+                    error_msg = f"❌ PortfolioManager Fehler: {e}"
+                    initialization_errors.append(error_msg)
+                    logging.error(error_msg)
+                    st.session_state.portfolio_manager = None
+                    if st.session_state.debug_mode:
+                        st.sidebar.error(error_msg)
 
-            # API Cache
-            cache_config = CacheConfig()
-            st.session_state.api_cache = APICache(cache_config)
+                # Alert Manager
+                try:
+                    alert_config = AlertConfig()
+                    st.session_state.alert_manager = AlertManager(alert_config)
+                    if st.session_state.debug_mode:
+                        st.sidebar.success("✅ AlertManager OK")
+                except Exception as e:
+                    error_msg = f"❌ AlertManager Fehler: {e}"
+                    initialization_errors.append(error_msg)
+                    logging.error(error_msg)
+                    st.session_state.alert_manager = None
+                    if st.session_state.debug_mode:
+                        st.sidebar.error(error_msg)
 
-            # Model Registry
-            st.session_state.model_registry = ModelRegistry()
+                # API Cache
+                try:
+                    cache_config = CacheConfig()
+                    st.session_state.api_cache = APICache(cache_config)
+                    if st.session_state.debug_mode:
+                        st.sidebar.success("✅ APICache OK")
+                except Exception as e:
+                    error_msg = f"❌ APICache Fehler: {e}"
+                    initialization_errors.append(error_msg)
+                    logging.error(error_msg)
+                    st.session_state.api_cache = None
+                    if st.session_state.debug_mode:
+                        st.sidebar.error(error_msg)
 
-            st.session_state.components_initialized = True
-            logging.info("All components initialized successfully")
+                # Model Registry
+                try:
+                    st.session_state.model_registry = ModelRegistry()
+                    if st.session_state.debug_mode:
+                        st.sidebar.success("✅ ModelRegistry OK")
+                except Exception as e:
+                    error_msg = f"❌ ModelRegistry Fehler: {e}"
+                    initialization_errors.append(error_msg)
+                    logging.error(error_msg)
+                    st.session_state.model_registry = None
+                    if st.session_state.debug_mode:
+                        st.sidebar.error(error_msg)
+
+                st.session_state.components_initialized = True
+
+                if initialization_errors:
+                    logging.warning(f"Initialisierung mit {len(initialization_errors)} Warnungen abgeschlossen")
+                else:
+                    logging.info("✅ All components initialized successfully")
+
+            except Exception as e:
+                error_msg = f"❌ KRITISCHER FEHLER bei Component Initialization: {e}"
+                initialization_errors.append(error_msg)
+                logging.error(error_msg)
+                st.error(error_msg)
+                import traceback
+                traceback_msg = traceback.format_exc()
+                logging.error(traceback_msg)
+                if st.session_state.debug_mode:
+                    st.sidebar.error(error_msg)
+                    with st.sidebar.expander("Traceback"):
+                        st.code(traceback_msg)
 
     except Exception as e:
-        logging.error(f"Error initializing session state: {e}")
-        st.error(f"⚠️ Fehler bei der Initialisierung: {e}")
+        error_msg = f"❌ KRITISCHER FEHLER in init_session_state: {e}"
+        logging.error(error_msg)
+        st.error(error_msg)
+        import traceback
+        traceback_msg = traceback.format_exc()
+        logging.error(traceback_msg)
+        st.code(traceback_msg)
+
+    # Speichere Errors für spätere Anzeige
+    if 'initialization_errors' not in st.session_state:
+        st.session_state.initialization_errors = initialization_errors
 
 # Initialize session state
 init_session_state()
@@ -598,14 +702,27 @@ def display_live_logs(logs: List[str], container):
 def start_scraper():
     """Start the hybrid scraper"""
     try:
+        # KRITISCHE PRÜFUNG: log_manager muss existieren
+        if not hasattr(st.session_state, 'log_manager') or st.session_state.log_manager is None:
+            error_msg = "❌ FEHLER: LogStreamManager nicht initialisiert! Bitte Dashboard neu laden."
+            st.error(error_msg)
+            logging.error(error_msg)
+            return
+
         cwd = str(Path.cwd())
         command = ['python', 'sportmonks_hybrid_scraper_v3_FINAL.py']
+
+        logging.info(f"Starting scraper with command: {command} in {cwd}")
         st.session_state.log_manager.start_process('scraper', command, cwd=cwd)
         st.session_state.process_states['scraper'] = 'running'
         st.success("🚀 Hybrid Scraper gestartet!")
+        logging.info("Scraper started successfully")
+
     except Exception as e:
         st.error(f"❌ Fehler beim Starten des Scrapers: {e}")
         logging.error(f"Scraper start error: {e}")
+        import traceback
+        traceback.print_exc()
 
 def stop_scraper():
     """Stop the hybrid scraper"""
@@ -750,18 +867,39 @@ def main():
     # =============================================================================
     with tab2:
         st.markdown("## 🔧 System Control Center")
-        
+
+        # KRITISCHER SYSTEM-CHECK
+        system_ready = True
+        if not hasattr(st.session_state, 'log_manager') or st.session_state.log_manager is None:
+            st.error("❌ KRITISCH: LogStreamManager nicht initialisiert - Buttons werden nicht funktionieren!")
+            st.warning("⚠️ Bitte Dashboard neu laden (F5) oder Dependencies prüfen")
+            system_ready = False
+
+            with st.expander("🔍 Debug-Info"):
+                st.code(f"""
+log_manager exists: {hasattr(st.session_state, 'log_manager')}
+log_manager value: {st.session_state.log_manager if hasattr(st.session_state, 'log_manager') else 'N/A'}
+initialization_errors: {st.session_state.get('initialization_errors', [])}
+""")
+        else:
+            st.success("✅ System bereit - LogStreamManager initialisiert")
+
         # Process Status Overview
         st.markdown("### 📊 Process Status")
         status_cols = st.columns(5)
         
         for idx, (process_name, status) in enumerate(st.session_state.process_states.items()):
             with status_cols[idx % 5]:
-                is_running = st.session_state.log_manager.is_running(process_name)
-                if is_running:
-                    st.markdown(f'<span class="process-badge process-running">{process_name}: RUNNING</span>', unsafe_allow_html=True)
+                # Sicherer Check ob log_manager existiert
+                if hasattr(st.session_state, 'log_manager') and st.session_state.log_manager is not None:
+                    is_running = st.session_state.log_manager.is_running(process_name)
+                    if is_running:
+                        st.markdown(f'<span class="process-badge process-running">{process_name}: RUNNING</span>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<span class="process-badge process-stopped">{process_name}: STOPPED</span>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<span class="process-badge process-stopped">{process_name}: STOPPED</span>', unsafe_allow_html=True)
+                    # Fallback wenn log_manager fehlt
+                    st.markdown(f'<span class="process-badge process-idle">{process_name}: OFFLINE</span>', unsafe_allow_html=True)
         
         st.markdown("---")
         
@@ -1398,8 +1536,11 @@ with st.sidebar:
     st.markdown("### 📡 System Status")
     
     # Check running processes
-    running_count = sum(1 for p in ['scraper', 'dutching', 'ml_training', 'portfolio', 'alerts'] 
-                       if st.session_state.log_manager.is_running(p))
+    if hasattr(st.session_state, 'log_manager') and st.session_state.log_manager is not None:
+        running_count = sum(1 for p in st.session_state.process_states.keys()
+                           if st.session_state.log_manager.is_running(p))
+    else:
+        running_count = 0
     
     if running_count == 5:
         st.success(f"✅ All Systems Online ({running_count}/5)")
@@ -1409,11 +1550,14 @@ with st.sidebar:
         st.error("❌ All Systems Offline")
     
     # Individual Status
-    for process_name in ['scraper', 'dutching', 'ml_training', 'portfolio', 'alerts']:
-        if st.session_state.log_manager.is_running(process_name):
-            st.success(f"✅ {process_name.replace('_', ' ').title()}")
-        else:
-            st.error(f"❌ {process_name.replace('_', ' ').title()}")
+    if hasattr(st.session_state, 'log_manager') and st.session_state.log_manager is not None:
+        for process_name in st.session_state.process_states.keys():
+            if st.session_state.log_manager.is_running(process_name):
+                st.success(f"✅ {process_name.replace('_', ' ').title()}")
+            else:
+                st.error(f"❌ {process_name.replace('_', ' ').title()}")
+    else:
+        st.error("❌ System OFFLINE - Dependencies fehlen!")
     
     st.markdown("---")
     
