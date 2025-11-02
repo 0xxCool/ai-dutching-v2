@@ -47,6 +47,10 @@ import base64
 from io import BytesIO, StringIO
 import signal
 import logging
+from pathlib import Path
+
+# Ensure logs directory exists
+Path('logs').mkdir(parents=True, exist_ok=True)
 
 # Configure logging
 logging.basicConfig(
