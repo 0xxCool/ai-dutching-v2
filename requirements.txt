@@ -111,12 +111,12 @@ pynvml==11.5.3
 # =========================
 # JUPYTER & NOTEBOOKS
 # =========================
-jupyter==1.1.1
-jupyterlab==4.3.3
+jupyter
+jupyterlab
 ipykernel==6.29.5
 ipywidgets==8.1.5
 nbconvert==7.16.4
-notebook==7.3.2
+notebook
 
 # =========================
 # TESTING
@@ -161,3 +161,4 @@ prophet==1.1.6
 pmdarima  # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
 tslearn   # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
 sktime    # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
+
