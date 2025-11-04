@@ -162,7 +162,7 @@ ray==2.40.0
 # TIME SERIES
 # =========================
 prophet==1.1.6
-pmdarima==2.1.0
+pmdarima
 tslearn==0.7.0
 sktime==0.33.3
 
@@ -289,4 +289,5 @@ sktime==0.33.3
 # → Reichlich Reserve für große Batches!
 #
 # ==========================================================
+
 
