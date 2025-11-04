@@ -1,17 +1,14 @@
 # ============================================================
-# AI-DUTCHING ML SYSTEM - PYTHON REQUIREMENTS
+# AI-DUTCHING ML SYSTEM - PYTHON REQUIREMENTS (BEREINIGT)
 # ============================================================
-# Installation: pip install -r requirements.txt
+# Diese Datei wird NACH den GPU-Paketen installiert.
 # ============================================================
 
 # =========================
 # CORE ML & DEEP LEARNING
 # =========================
-torch==2.3.1
-torchvision
-torchaudio
-xgboost==2.1.2
-lightgbm==4.5.0
+# torch, torchvision, torchaudio, xgboost, lightgbm
+# werden separat für GPU-Support installiert!
 tensorflow==2.18.0  # Optional
 
 # =========================
@@ -35,7 +32,6 @@ feature-engine==1.8.1
 # =========================
 optuna==4.1.0
 hyperopt==0.2.7
-ray[tune]==2.40.0
 scikit-optimize==0.10.2
 
 # =========================
@@ -53,7 +49,7 @@ wandb==0.18.7
 mlflow==2.18.0
 sacred==0.8.5
 neptune-client==1.12.0
-dagshub
+dagshub  # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
 
 # =========================
 # WEB & API
@@ -156,138 +152,12 @@ snakeviz==2.2.0
 joblib==1.5.0
 multiprocess==0.70.18
 dask[complete]==2024.12.1
-ray==2.40.0
+ray[tune]==2.40.0  # ray==2.40.0 ist hier enthalten
 
 # =========================
 # TIME SERIES
 # =========================
 prophet==1.1.6
-pmdarima
-tslearn==0.7.0
-sktime==0.33.3
-
-# =========================
-# NATURAL LANGUAGE (Optional)
-# =========================
-# nltk==3.9.1
-# spacy==3.8.3
-# transformers==4.47.1
-# sentence-transformers==3.3.1
-
-# =========================
-# COMPUTER VISION (Optional)
-# =========================
-# opencv-python==4.10.0.84
-# pillow==11.0.0
-# albumentations==1.4.23
-# segmentation-models-pytorch==0.3.4
-
-# =========================
-# REINFORCEMENT LEARNING (Optional)
-# =========================
-# gym==0.26.2
-# stable-baselines3==2.4.0
-# tensorforce==0.6.5
-
-# ==========================================================
-# GPU INSTALLATION (RTX 3090 OPTIMIERT)
-# ==========================================================
-#
-# WICHTIG: Für maximale Performance mit Nvidia RTX 3090:
-#
-# 1. CUDA Toolkit installieren:
-#    - Download: https://developer.nvidia.com/cuda-downloads
-#    - Empfohlen: CUDA 12.1 oder CUDA 11.8
-#    - Installiere: CUDA Toolkit + cuDNN
-#
-# 2. PyTorch mit CUDA installieren:
-#
-#    Für CUDA 12.1 (Empfohlen für RTX 3090):
-#      pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-#
-#    Für CUDA 11.8:
-#      pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-#
-# 3. XGBoost mit GPU-Support:
-#    pip install xgboost --config-settings use_cuda=True
-#
-# 4. Verifiziere GPU:
-#    python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else None}')"
-#
-# 5. Teste RTX 3090 Performance:
-#    python gpu_ml_models.py
-#
-# ==========================================================
-# INSTALLATION GUIDE
-# ==========================================================
-#
-# WINDOWS SERVER INSTALLATION:
-# ----------------------------
-# 1. Installiere Python 3.10 oder 3.11 (64-bit)
-#
-# 2. Installiere CUDA Toolkit (siehe GPU Installation oben)
-#
-# 3. Installiere Core Dependencies:
-#    pip install pandas numpy scipy requests python-dotenv tqdm pyyaml
-#    pip install streamlit plotly matplotlib seaborn
-#
-# 4. Installiere PyTorch mit CUDA:
-#    pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-#
-# 5. Installiere Rest:
-#    pip install -r requirements.txt
-#
-# 6. Optional - GPU Monitoring:
-#    pip install nvidia-ml-py3
-#
-# MINIMAL (Core + Dashboard):
-# ---------------------------
-#   pip install pandas numpy scipy requests python-dotenv tqdm pyyaml
-#   pip install streamlit plotly matplotlib
-#
-# RECOMMENDED (mit ML):
-# ---------------------
-#   pip install -r requirements.txt
-#
-# FULL GPU SYSTEM (maximale Performance):
-# ---------------------------------------
-#   # 1. CUDA Toolkit installieren
-#   # 2. PyTorch mit CUDA:
-#   pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-#   # 3. Alle Dependencies:
-#   pip install -r requirements.txt
-#   # 4. Optional:
-#   pip install redis psycopg2-binary python-telegram-bot discord-webhook nvidia-ml-py3
-#
-# ==========================================================
-# PERFORMANCE-ERWARTUNGEN (RTX 3090)
-# ==========================================================
-#
-# Neural Network Training:
-# - CPU: ~100-200 samples/sec
-# - RTX 3090 (FP32): ~1000-2000 samples/sec
-# - RTX 3090 (FP16 Mixed Precision): ~2000-4000 samples/sec
-# → 10-40x Speedup!
-#
-# XGBoost Training:
-# - CPU: Baseline
-# - RTX 3090 GPU: 10-50x schneller
-#
-# Inference (Prediction):
-# - Batch-Predictions: 100-500x schneller
-#
-# Deep RL Training (DQN):
-# - CPU: ~50-100 steps/sec
-# - RTX 3090: ~1000-3000 steps/sec
-# → 20-60x Speedup!
-#
-# Erwartete VRAM-Nutzung:
-# - Neural Network: ~500-2000 MB
-# - XGBoost: ~1000-3000 MB
-# - Deep RL DQN: ~1000-4000 MB
-# - Gesamt-System: ~5-10 GB (von 24 GB RTX 3090)
-# → Reichlich Reserve für große Batches!
-#
-# ==========================================================
-
-
+pmdarima  # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
+tslearn   # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
+sktime    # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
