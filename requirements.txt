@@ -58,6 +58,7 @@ fastapi==0.115.5
 uvicorn==0.32.1
 streamlit==1.41.0
 streamlit_autorefresh
+streamlit_shadcn_ui
 gradio==5.7.1
 flask==3.1.0
 django==5.1.4
@@ -162,5 +163,6 @@ prophet==1.1.6
 pmdarima  # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
 tslearn   # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
 sktime    # KORRIGIERT: Version entfernt, um Kompatibilitätsfehler zu beheben
+
 
 
