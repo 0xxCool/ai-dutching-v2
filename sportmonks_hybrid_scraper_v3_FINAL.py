@@ -20,12 +20,12 @@ Was macht dieser Scraper?
 
 Output:
 -------
-- game_database_complete.csv (xG + Odds) ← FÜR ML-TRAINING!
-- game_database_xg_only.csv (nur xG)
+- game_database_complete.csv (xG + Odds + Correct Score) <- FÜR ML-TRAINING!
+- game_database_xg_only.csv (nur xG + Correct Score)
 - game_database_odds_only.csv (nur Odds)
 
-Version: 3.0 FINAL
-Datum: 2025-10-30
+Version: 3.1 FINAL (Integriert)
+Datum: 2025-11-03
 """
 
 import pandas as pd
@@ -184,7 +184,7 @@ class SportmonksXGClient:
         return pd.DataFrame(games)
 
     def _extract_fixture_data(self, fixture: Dict, league_name: str) -> Optional[Dict]:
-        """Extrahiere Daten aus Fixture"""
+        """Extrahiere Daten aus Fixture (*** ANGEPASST ***)"""
 
         # Basis-Daten
         fixture_id = fixture.get('id')
@@ -232,6 +232,11 @@ class SportmonksXGClient:
                             home_score = int(goals)
                         elif len(participants) > 1 and participants[1].get('id') == participant_id:
                             away_score = int(goals)
+        
+        # *** NEU: Erstelle den Correct Score String ***
+        correct_score = None
+        if home_score is not None and away_score is not None:
+            correct_score = f"{home_score}-{away_score}"
 
         # xG-Daten
         xg_data = fixture.get('xgfixture', [])
@@ -261,6 +266,7 @@ class SportmonksXGClient:
             'away_team': away_team,
             'home_score': home_score,
             'away_score': away_score,
+            'correct_score': correct_score,  # <-- *** NEUES FELD ***
             'home_xg': home_xg,
             'away_xg': away_xg,
             'status': 'FT'
@@ -399,7 +405,7 @@ class HybridScraper:
         """Scrape alle Daten"""
 
         print("\n" + "=" * 70)
-        print("🚀 HYBRID SCRAPER v3.0 - Sportmonks xG + Football-Data Odds")
+        print("🚀 HYBRID SCRAPER v3.1 - Sportmonks xG + Football-Data Odds")
         print("=" * 70)
 
         # Ligen
@@ -408,7 +414,7 @@ class HybridScraper:
             (82, 'Bundesliga'),
             (564, 'La Liga'),
             (301, 'Ligue 1'),
-            # (384, 'Serie A'),  # Optional
+            (384, 'Serie A'),
         ]
 
         all_xg_data = []
@@ -521,14 +527,16 @@ class HybridScraper:
         return merged
 
     def save_data(self, results: Dict[str, pd.DataFrame]):
-        """Speichere Ergebnisse"""
+        """Speichere Ergebnisse (*** ANGEPASST ***)"""
 
         print("\n💾 SPEICHERE DATEN...")
         print("=" * 70)
 
+        # *** NEUE OUTPUT-SPALTEN ***
         output_cols = [
             'date', 'league', 'home_team', 'away_team',
             'home_score', 'away_score',
+            'correct_score',  # <-- *** NEUES FELD ***
             'home_xg', 'away_xg',
             'odds_home', 'odds_draw', 'odds_away',
             'status', 'fixture_id'
@@ -542,7 +550,7 @@ class HybridScraper:
             df_out = df_out.sort_values('date').reset_index(drop=True)
 
             df_out.to_csv(self.config.output_file_complete, index=False)
-            print(f"\n✅ KOMPLETT (xG + Quoten): {len(df_out)} Spiele")
+            print(f"\n✅ KOMPLETT (xG + Quoten + CS): {len(df_out)} Spiele")
             print(f"   Datei: {self.config.output_file_complete}")
             print(f"   Größe: {os.path.getsize(self.config.output_file_complete)/1024:.1f} KB")
         else:
@@ -556,7 +564,7 @@ class HybridScraper:
             df_out = df_out.sort_values('date').reset_index(drop=True)
 
             df_out.to_csv(self.config.output_file_xg_only, index=False)
-            print(f"\n✅ NUR xG: {len(df_out)} Spiele")
+            print(f"\n✅ NUR xG (mit CS): {len(df_out)} Spiele")
             print(f"   Datei: {self.config.output_file_xg_only}")
 
         # Statistiken
@@ -584,7 +592,7 @@ class HybridScraper:
 
             # Feature-Check
             print(f"\n✅ Features verfügbar:")
-            features = ['home_xg', 'away_xg', 'odds_home', 'odds_draw', 'odds_away']
+            features = ['home_xg', 'away_xg', 'correct_score', 'odds_home', 'odds_draw', 'odds_away']
             for feat in features:
                 if feat in df_complete.columns:
                     missing = df_complete[feat].isna().sum()

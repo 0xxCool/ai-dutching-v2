@@ -38,6 +38,9 @@ class CorrectScoreConfig:
     USE_FALLBACK_DATA: bool = True
     MIN_DATA_CONFIDENCE: float = 0.0
     
+    # NEU: Toleranz für "Aggressive" Wetten
+    AGGRESSIVE_EV_TOLERANCE: float = -0.20 # Zeige Wetten bis -20% EV
+    
     OUTPUT_FILE: str = field(default_factory=lambda: f'correct_score_results_{dt.datetime.now():%Y%m%d_%H%M%S}.csv')
 
 # ==========================================================
@@ -123,7 +126,7 @@ class CorrectScorePoissonModel:
         return sorted_scores[:n]
 
 # ==========================================================
-# VALUE BET CALCULATOR
+# VALUE BET CALCULATOR (*** ANGEPASST ***)
 # ==========================================================
 class CorrectScoreValueCalculator:
     """Berechnet Value Bets für Correct Scores"""
@@ -142,9 +145,11 @@ class CorrectScoreValueCalculator:
         Berechne Value Bet für einen einzelnen Correct Score
         
         Returns:
-            stake: Empfohlener Einsatz
+            stake: Empfohlener Einsatz (kann 0 sein)
             metrics: Dict mit Metriken
         """
+        
+        stake = 0.0
         
         # Prüfe Quoten-Range
         if odds < self.config.MIN_ODDS or odds > self.config.MAX_ODDS:
@@ -163,26 +168,33 @@ class CorrectScoreValueCalculator:
         # Dynamischer Edge-Threshold
         dynamic_min_edge = self.config.BASE_EDGE + (confidence * self.config.ADAPTIVE_EDGE_FACTOR)
         
-        # Prüfe ob profitable
-        if ev <= dynamic_min_edge:
-            return 0, {}
+        # --- NEUE LOGIK: Klassifizieren statt filtern ---
+        bet_label = "Nicht wetten (Neg-EV)"
+        kelly_fraction = 0.0
+
+        if ev > dynamic_min_edge:
+            # KONSERVATIV: Das ist eine Value Bet nach unseren Regeln
+            bet_label = "Konservativ (Value)"
+            kelly_fraction = ev / (odds - 1)
+            kelly_fraction = min(kelly_fraction, self.config.KELLY_CAP)
+            
+            stake = self.config.BANKROLL * kelly_fraction
+            max_stake = self.config.BANKROLL * self.config.MAX_STAKE_PERCENT
+            stake = min(stake, max_stake)
+
+        elif ev > self.config.AGGRESSIVE_EV_TOLERANCE:
+            # AGGRESSIV: Kein echter Value, aber in unserer Toleranz
+            bet_label = "Aggressiv (Neg-EV)"
+            stake = 0.0 # Wir setzen nicht, aber wir loggen es
         
-        # Kelly-Kriterium
-        kelly_fraction = ev / (odds - 1)
-        kelly_fraction = min(kelly_fraction, self.config.KELLY_CAP)
-        
-        # Berechne Stake
-        stake = self.config.BANKROLL * kelly_fraction
-        
-        # Prüfe Max Stake
-        max_stake = self.config.BANKROLL * self.config.MAX_STAKE_PERCENT
-        stake = min(stake, max_stake)
-        
+        # else: bet_label bleibt "Nicht wetten (Neg-EV)"
+
         # Metriken
         profit = ev * stake
         roi = (profit / stake * 100) if stake > 0 else 0
         
         metrics = {
+            'bet_label': bet_label,  # <-- NEUES FELD
             'expected_value': ev,
             'roi': roi,
             'profit': profit,
@@ -192,6 +204,10 @@ class CorrectScoreValueCalculator:
             'kelly_fraction': kelly_fraction
         }
         
+        # Gib nur Metriken zurück, wenn wir sie anzeigen wollen
+        if bet_label == "Nicht wetten (Neg-EV)":
+             return 0, {} 
+
         return stake, metrics
 
 # ==========================================================
@@ -202,6 +218,7 @@ class CorrectScoreDatabase:
     
     def __init__(self, filepath: str, config: CorrectScoreConfig):
         self.config = config
+        # *** NUTZT JETZT DIE NEUE KOMPLETTE DATENBANK ***
         self.game_database = self._load_data(filepath)
         self.global_avg_xg = 1.35
         
@@ -282,14 +299,15 @@ class CorrectScoreDatabase:
         return home_lambda, away_lambda, confidence
 
 # ==========================================================
-# ANALYZER
+# ANALYZER (*** ANGEPASST ***)
 # ==========================================================
 class CorrectScoreAnalyzer:
     """Analysiert Matches für Correct Score Wetten"""
     
     def __init__(self, config: CorrectScoreConfig):
         self.config = config
-        self.database = CorrectScoreDatabase("correct_score_database.csv", config)
+        # *** NUTZT JETZT DIE NEUE KOMPLETTE DATENBANK ***
+        self.database = CorrectScoreDatabase("game_database_complete.csv", config)
         self.poisson = CorrectScorePoissonModel(config)
         self.calculator = CorrectScoreValueCalculator(config)
         
@@ -297,6 +315,7 @@ class CorrectScoreAnalyzer:
         self.matches_with_odds = 0
         self.matches_with_data = 0
         self.bets_found = 0
+        self.aggressive_bets = 0
     
     def analyze_match(self, fixture: Dict, odds_data: Dict) -> List[Dict]:
         """Analysiere ein Match für Correct Score Wetten"""
@@ -348,14 +367,19 @@ class CorrectScoreAnalyzer:
             # Berechne Value Bet
             stake, metrics = self.calculator.calculate_value_bet(score, odds, prob)
             
-            if stake > 0:
-                self.bets_found += 1
+            # *** ANGEPASSTE LOGIK ***
+            # Füge hinzu, wenn Metriken zurückgegeben wurden (also Konservativ ODER Aggressiv)
+            if metrics:
+                if stake > 0:
+                    self.bets_found += 1
+                else:
+                    self.aggressive_bets += 1
                 
                 if self.config.DEBUG_MODE:
-                    print(f"\n  ✅ VALUE BET: {home} vs {away}")
+                    print(f"\n  ✅ {metrics['bet_label']}: {home} vs {away}")
                     print(f"     Score: {score}")
-                    print(f"     Odds: {odds:.2f}, Prob: {prob:.4f}")
-                    print(f"     Stake: €{stake:.2f}, Profit: €{metrics['profit']:.2f}")
+                    print(f"     Odds: {odds:.2f}, Prob: {prob:.4f}, EV: {metrics['expected_value']:.3f}")
+                    print(f"     Stake: €{stake:.2f}")
                 
                 results.append({
                     'date': dt.datetime.now(dt.UTC),
@@ -380,7 +404,8 @@ class CorrectScoreAnalyzer:
         print(f"  Analysierte Spiele: {self.matches_analyzed}")
         print(f"  Spiele mit Quoten: {self.matches_with_odds}")
         print(f"  Spiele mit Daten: {self.matches_with_data}")
-        print(f"  Gefundene Wetten: {self.bets_found}")
+        print(f"  Gefundene Wetten (Konservativ): {self.bets_found}")
+        print(f"  Gefundene Wetten (Aggressiv): {self.aggressive_bets}")
         print(f"{'='*70}\n")
 
 # ==========================================================
@@ -395,68 +420,97 @@ class SportmonksCorrectScoreClient:
         self.base_url = "https://api.sportmonks.com/v3/football"
         self.api_calls = 0
         self.max_api_calls = 2000
+        self.session = requests.Session()
         
-    def _make_request(self, endpoint: str, params: Dict = None) -> Dict:
-        """Request mit Error Handling"""
+    def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
+        """Zentrale Request-Funktion mit Retry-Logik & 1.3s Delay"""
         if self.api_calls >= self.max_api_calls:
-            print(f"\n⚠️ API-Limit erreicht ({self.api_calls})")
-            return {}
-        
-        url = f"{self.base_url}/{endpoint}"
-        
+            print(f"\n⚠️ API-Limit erreicht ({self.api_calls} Calls)")
+            return None
+            
         if params is None:
             params = {}
         
         params['api_token'] = self.api_token
+        url = f"{self.base_url}/{endpoint}"
         
-        try:
-            response = requests.get(url, params=params, timeout=15)
-            self.api_calls += 1
-            
-            if response.status_code == 429:
-                print(f"\n⚠️ Rate Limit!")
-                return {}
-            
-            response.raise_for_status()
-            time.sleep(0.2)
-            
-            return response.json()
-            
-        except requests.exceptions.RequestException as e:
-            if self.config.DEBUG_MODE:
-                print(f"API Error: {e}")
-            return {}
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = self.session.get(url, params=params, timeout=20)
+                self.api_calls += 1
+                
+                if response.status_code == 429:  # Rate Limit
+                    wait_time = 2 ** attempt
+                    print(f"⚠️ Rate Limit - warte {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                
+                response.raise_for_status()
+                # WICHTIG: Delay NACH dem Request
+                time.sleep(1.3) # Respektiere 3000 req/hr Limit
+                
+                return response.json()
+                
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:
+                    print(f"❌ API-Fehler nach {max_retries} Versuchen: {e}")
+                    return None
+                time.sleep(1)
+        
+        return None
     
     def get_fixtures(self, date_from: str, date_to: str, league_ids: List[int]) -> List[Dict]:
-        """Hole Fixtures"""
-        all_fixtures = []
+        """Hole Fixtures für bestimmte Ligen und Zeitraum (V3-SYNTAX)"""
         
-        for league_id in league_ids:
+        leagues_str = ",".join(map(str, league_ids))
+        
+        endpoint = f"fixtures/between/{date_from}/{date_to}"
+        
+        params = {
+            'leagues': leagues_str,
+            'include': 'participants;league'
+        }
+        
+        all_fixtures = []
+        page = 1
+        
+        while True:
             if self.api_calls >= self.max_api_calls:
                 break
             
-            params = {
-                'filters': f'leagueIds:{league_id};fixtureStartingAt:{date_from},{date_to}',
-                'include': 'participants'
-            }
+            params['page'] = page
+            data = self._make_request(endpoint, params)
             
-            data = self._make_request('fixtures', params)
+            if not data or 'data' not in data:
+                break
             
-            if data and 'data' in data:
-                fixtures = data['data']
-                upcoming = [f for f in fixtures if f.get('state', {}).get('state') == 'NS']
-                all_fixtures.extend(upcoming)
-        
+            fixtures = data['data']
+            if not fixtures:
+                break
+            
+            # Filter nur "Not Started" Status
+            upcoming = [f for f in fixtures if f.get('state_id') == 1]
+            all_fixtures.extend(upcoming)
+            
+            # Paginierungs-Check
+            pagination = data.get('pagination', {})
+            if not pagination.get('has_more', False):
+                break
+                
+            page += 1
+            
         return all_fixtures
     
     def get_correct_score_odds(self, fixture_id: int) -> Dict:
         """
         Hole Correct Score Quoten für ein Fixture
-        
         Returns:
             Dict mit Correct Scores: {'1-0': 7.5, '2-1': 9.0, ...}
         """
-        params = {'include': 'bookmaker;market'}
+        params = {
+            'include': 'bookmaker;market'
+        }
         
         data = self._make_request(f'odds/pre-match/fixtures/{fixture_id}', params)
         
@@ -470,48 +524,46 @@ class SportmonksCorrectScoreClient:
         
         correct_scores = {}
         
-        for odds_item in odds_data:
-            if 'market' not in odds_item:
+        # Finde den "primären" Bookie (z.B. Pinnacle, ID 2)
+        primary_odds_data = [o for o in odds_data if o.get('bookmaker', {}).get('id') == 2]
+        if not primary_odds_data:
+             primary_odds_data = odds_data # Fallback
+
+        for odds_item in primary_odds_data:
+            market = odds_item.get('market')
+            if not market:
                 continue
-            
-            market = odds_item['market']
+
             market_name = market.get('name', '')
             
             # Suche nach "Correct Score" Market
-            # Kann verschiedene Namen haben: "Correct Score", "Exact Score", etc.
             if 'Correct Score' in market_name or 'Exact Score' in market_name:
-                bookmaker_odds = odds_item.get('bookmaker', {})
                 
-                if 'odds' in bookmaker_odds:
-                    odds_values = bookmaker_odds['odds']
+                bookmaker_odds_list = odds_item.get('bookmaker', {}).get('odds', [])
+                if not bookmaker_odds_list:
+                    continue
+                
+                odds_values = bookmaker_odds_list[0].get('odds', [])
+                if not odds_values:
+                    continue
+
+                for odd in odds_values:
+                    label = odd.get('label', '')  # z.B. "1-0", "2-1", etc.
+                    value = odd.get('value', 0)   # Quote
                     
-                    for odd in odds_values:
-                        label = odd.get('label', '')  # z.B. "1-0", "2-1", etc.
-                        value = odd.get('value', 0)   # Quote
-                        
-                        if value and value > 0:
-                            # Normalisiere Label (manchmal "Home 1 - Away 0" statt "1-0")
-                            if '-' in label:
-                                correct_scores[label.strip()] = float(value)
-                            elif 'Home' in label and 'Away' in label:
-                                # Parse "Home 1 - Away 0" Format
-                                try:
-                                    parts = label.split('-')
-                                    home_goals = ''.join(filter(str.isdigit, parts[0]))
-                                    away_goals = ''.join(filter(str.isdigit, parts[1]))
-                                    score = f"{home_goals}-{away_goals}"
-                                    correct_scores[score] = float(value)
-                                except:
-                                    pass
+                    if value and value > 0 and '-' in label:
+                        # Normalisiere Label (z.B. "1 - 0" -> "1-0")
+                        score = "".join(label.split())
+                        correct_scores[score] = float(value)
                 
-                # Nehme ersten verfügbaren Bookmaker
+                # Nimm den ersten Bookie mit Correct Score Daten
                 if correct_scores:
                     break
         
         return {'Correct Score': correct_scores} if correct_scores else {}
 
 # ==========================================================
-# RESULT FORMATTER
+# RESULT FORMATTER (*** ANGEPASST ***)
 # ==========================================================
 class ResultFormatter:
     """Formatiert Ergebnisse für Ausgabe"""
@@ -525,24 +577,27 @@ class ResultFormatter:
             formatted.append({
                 'Date': r['date'].strftime('%Y-%m-%d %H:%M'),
                 'Match': f"{r['home']} vs {r['away']}",
+                'Bet_Type': r['metrics']['bet_label'], # <-- NEUE SPALTE
                 'Correct_Score': r['correct_score'],
                 'Odds': f"{r['odds']:.2f}",
                 'Probability': f"{r['probability']:.4f} ({r['probability']*100:.2f}%)",
                 'Stake': f"€{r['stake']:.2f}",
                 'Expected_Profit': f"€{r['profit']:.2f}",
-                'ROI': f"{r['metrics']['roi']:.1f}%",
                 'EV': f"{r['metrics']['expected_value']:.4f}",
-                'Confidence': f"{r['metrics']['confidence']:.3f}"
             })
-        return pd.DataFrame(formatted)
+        
+        df = pd.DataFrame(formatted)
+        # Sortiere, sodass Konservative oben sind
+        df = df.sort_values(by=['Bet_Type', 'EV'], ascending=[True, False])
+        return df
     
     def display_results(self, df: pd.DataFrame):
         if df.empty:
-            print("\n❌ Keine profitablen Wetten gefunden.\n")
+            print("\n❌ Keine Wetten (konservativ oder aggressiv) gefunden.\n")
             return
         
         print("\n" + "="*70)
-        print("⚽ PROFITABLE CORRECT SCORE WETTEN")
+        print("⚽ PROFITABLE & AGGRESSIVE CORRECT SCORE WETTEN")
         print("="*70)
         print(df.to_string(index=False))
         print("="*70 + "\n")
@@ -554,6 +609,7 @@ class CorrectScoreBettingSystem:
     """Hauptsystem für Correct Score Wetten"""
     
     def __init__(self, config: CorrectScoreConfig = None):
+        print("Initialisiere Correct Score System...")
         self.config = config or CorrectScoreConfig()
         self.api_token = os.getenv("SPORTMONKS_API_TOKEN")
         
@@ -565,6 +621,7 @@ class CorrectScoreBettingSystem:
         self.analyzer = CorrectScoreAnalyzer(self.config)
         self.formatter = ResultFormatter()
         self.results = []
+        print("✅ Correct Score System initialisiert.")
     
     def run(self):
         print("\n" + "="*70)
@@ -616,37 +673,47 @@ class CorrectScoreBettingSystem:
         
         self.analyzer.print_summary()
         
-        # Sortiere nach Profit
-        self.results = sorted(all_results, key=lambda x: x['profit'], reverse=True)
+        # Sortiere (passiert jetzt im Formatter)
+        self.results = all_results
         
         df = self.formatter.format_dataframe(self.results)
         self.formatter.display_results(df)
         
         if self.results:
-            total_stake = sum(r['stake'] for r in self.results)
-            total_profit = sum(r['profit'] for r in self.results)
-            avg_roi = (total_profit / total_stake * 100) if total_stake > 0 else 0
+            # Nur "Konservative" Wetten für die Profit-Zusammenfassung zählen
+            conservative_results = [r for r in self.results if r['stake'] > 0]
             
-            print("📊 ZUSAMMENFASSUNG")
-            print("="*70)
-            print(f"  • Gefundene Wetten: {len(self.results)}")
-            print(f"  • Gesamteinsatz: €{total_stake:.2f}")
-            print(f"  • Erwarteter Profit: €{total_profit:.2f}")
-            print(f"  • Durchschnittlicher ROI: {avg_roi:.1f}%")
+            if conservative_results:
+                total_stake = sum(r['stake'] for r in conservative_results)
+                total_profit = sum(r['profit'] for r in conservative_results)
+                avg_roi = (total_profit / total_stake * 100) if total_stake > 0 else 0
+                
+                print("📊 ZUSAMMENFASSUNG (Nur Konservative Wetten)")
+                print("="*70)
+                print(f"  • Gefundene Wetten: {len(conservative_results)}")
+                print(f"  • Gesamteinsatz: €{total_stake:.2f}")
+                print(f"  • Erwarteter Profit: €{total_profit:.2f}")
+                print(f"  • Durchschnittlicher ROI: {avg_roi:.1f}%")
+                
+                # Top Scores
+                scores = {}
+                for r in conservative_results:
+                    score = r['correct_score']
+                    scores[score] = scores.get(score, 0) + 1
+                
+                print(f"\n  Häufigste Scores (Konservativ):")
+                for score, count in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:5]:
+                    print(f"    • {score}: {count}x")
             
-            # Top Scores
-            scores = {}
-            for r in self.results:
-                score = r['correct_score']
-                scores[score] = scores.get(score, 0) + 1
-            
-            print(f"\n  Häufigste Scores:")
-            for score, count in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:5]:
-                print(f"    • {score}: {count}x")
-            
+            else:
+                print("📊 ZUSAMMENFASSUNG (Nur Konservative Wetten)")
+                print("="*70)
+                print("  • Keine konservativen Wetten mit positivem Stake gefunden.")
+
+
             if self.config.SAVE_RESULTS:
                 df.to_csv(self.config.OUTPUT_FILE, index=False)
-                print(f"\n💾 Ergebnisse: {self.config.OUTPUT_FILE}")
+                print(f"\n💾 Ergebnisse (inkl. Aggressiv): {self.config.OUTPUT_FILE}")
         
         print(f"\n📡 API-Nutzung: {self.client.api_calls} von {self.client.max_api_calls}")
         print("\n" + "="*70)

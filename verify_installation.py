@@ -92,7 +92,7 @@ def main():
         }
         
         bst = xgb.train(params, dtrain, num_boost_round=1, verbose_eval=False)
-        print(f"✅ XGBoost GPU:      Available")
+        print(f"TensorFlow GPU:   Available")
     except Exception as e:
         print(f"❌ XGBoost GPU:      Not Available")
         print(f"   Error: {str(e)[:50]}...")

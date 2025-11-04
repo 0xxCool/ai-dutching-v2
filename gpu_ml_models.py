@@ -195,6 +195,12 @@ class GPUFeatureEngineer:
             'win_rate': float(win_rate),
             'points_per_game': float(ppg)
         }
+    
+    def _normalize_team_name(self, team_name: str) -> str:
+        # Verwende die gleichen Mappings wie TeamMatcher!
+        from sportmonks_dutching_system import TeamMatcher
+        
+        return TeamMatcher.normalize(team_name)
 
     def create_match_features(
         self,
@@ -202,6 +208,11 @@ class GPUFeatureEngineer:
         away_team: str,
         match_date: pd.Timestamp
     ) -> torch.Tensor:
+        
+        # NEUE ZEILEN: Normalisiere Team-Namen
+        home_team = self._normalize_team_name(home_team)
+        away_team = self._normalize_team_name(away_team)
+
         """Erstelle Feature-Tensor (GPU-ready)"""
         home_form = self.calculate_form_gpu(home_team, match_date, n_games=5)
         away_form = self.calculate_form_gpu(away_team, match_date, n_games=5)

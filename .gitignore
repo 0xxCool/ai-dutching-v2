@@ -85,6 +85,8 @@ backtest_results/
 *.pth
 *.csv
 models/*.pth
+models/
+results/
 
 # Streamlit
 .streamlit/secrets.toml

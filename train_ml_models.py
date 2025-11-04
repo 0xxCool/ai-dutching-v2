@@ -52,7 +52,7 @@ class TrainingConfig:
     """Training Configuration"""
 
     # Daten
-    DATABASE_FILE = "game_database_complete.csv"  # Vom Hybrid-Scraper!
+    DATABASE_FILE = "game_database_complete_normalized.csv"  # Vom Hybrid-Scraper!
     MIN_SAMPLES = 100  # Minimum Spiele für Training
 
     # Train/Validation/Test Split
