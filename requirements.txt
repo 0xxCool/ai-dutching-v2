@@ -53,7 +53,7 @@ wandb==0.18.7
 mlflow==2.18.0
 sacred==0.8.5
 neptune-client==1.12.0
-dagshub==0.3.48
+dagshub
 
 # =========================
 # WEB & API
@@ -289,3 +289,4 @@ sktime==0.33.3
 # → Reichlich Reserve für große Batches!
 #
 # ==========================================================
+
