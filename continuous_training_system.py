@@ -236,7 +236,7 @@ class ContinuousTrainingEngine:
 
     def __init__(
         self,
-        database_path: str = "game_database_sportmonks.csv",
+        database_path: str = "game_database_complete.csv",
         min_new_samples: int = 50,  # Min neue Samples für Retrain
         retrain_schedule: str = "daily"  # 'daily', 'weekly', 'manual'
     ):
@@ -599,7 +599,7 @@ if __name__ == "__main__":
 
     # Erstelle Engine
     engine = ContinuousTrainingEngine(
-        database_path="game_database_sportmonks.csv",
+        database_path="game_database_complete.csv",
         min_new_samples=50,
         retrain_schedule="daily"
     )
@@ -624,3 +624,4 @@ if __name__ == "__main__":
             print(f"  Training Samples: {champion.training_samples}")
 
     print("\n✅ Test abgeschlossen!")
+
