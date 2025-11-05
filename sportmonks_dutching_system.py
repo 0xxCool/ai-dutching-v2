@@ -32,11 +32,11 @@ load_dotenv()
 @dataclass
 class Config(PoissonConfig): # Erbt jetzt von PoissonConfig
     BANKROLL: float = 1000.0
-    KELLY_CAP: float = 0.25
+    KELLY_CAP: float = 0.15
     MAX_STAKE_PERCENT: float = 0.10
     BASE_EDGE: float = -0.08
     ADAPTIVE_EDGE_FACTOR: float = 0.10
-    MIN_ODDS: float = 1.1
+    MIN_ODDS: float = 1.10
     MAX_ODDS: float = 100.0
     SAVE_RESULTS: bool = True
     DEBUG_MODE: bool = True # *** DEBUG IST JETZT AKTIV ***
@@ -1472,3 +1472,4 @@ if __name__ == "__main__":
         print(f"\n\n❌ FEHLER: {e}")
 
         traceback.print_exc()
+
