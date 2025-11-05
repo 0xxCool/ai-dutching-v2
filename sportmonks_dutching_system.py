@@ -937,7 +937,7 @@ class SportmonksFixtureClient:
             filtered = []
             for fixture in fixtures:
                 # Prüfe Status: state_id == 1 bedeutet "Not Started"
-                if fixture.get('state_id') != 1:
+                if fixture.get('state_id') != 5:
                     continue
                 
                 # Prüfe Datum
@@ -1472,5 +1472,6 @@ if __name__ == "__main__":
         print(f"\n\n❌ FEHLER: {e}")
 
         traceback.print_exc()
+
 
 
