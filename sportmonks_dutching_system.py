@@ -633,8 +633,8 @@ class XGDatabase:
         
         all_teams = pd.concat([self.game_database['home_team'], self.game_database['away_team']]).unique()
         
-        home_team_match = TeamMatcher.find_best_match(home_team, all_teams, threshold=0.6)
-        away_team_match = TeamMatcher.find_best_match(away_team, all_teams, threshold=0.6)
+        home_team_match = TeamMatcher.find_best_match(home_team, all_teams, threshold=0.85)
+        away_team_match = TeamMatcher.find_best_match(away_team, all_teams, threshold=0.85)
         
         data_confidence = 0.0
         
@@ -1470,4 +1470,5 @@ if __name__ == "__main__":
         print("\n\n⚠️ Abgebrochen durch Benutzer")
     except Exception as e:
         print(f"\n\n❌ FEHLER: {e}")
+
         traceback.print_exc()
