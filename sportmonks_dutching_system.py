@@ -1307,8 +1307,8 @@ class SportmonksDutchingSystem:
                 return
             
             now = dt.datetime.now(dt.timezone.utc)
-            date_from = now.strftime("%Y-%m-%d")
-            date_to = (now + dt.timedelta(days=14)).strftime("%Y-%m-%d")
+            date_from = (now - dt.timedelta(days=30)).strftime("%Y-%m-%d")  # -30 Tage zurück
+            date_to = (now - dt.timedelta(days=1)).strftime("%Y-%m-%d")      # Bis gestern
             
             print(f"Suche Spiele von {date_from} bis {date_to}...")
             print(f"Ligen: {len(self.league_ids)} (Top 5 Ligen)")
@@ -1472,4 +1472,5 @@ if __name__ == "__main__":
         print(f"\n\n❌ FEHLER: {e}")
 
         traceback.print_exc()
+
 
