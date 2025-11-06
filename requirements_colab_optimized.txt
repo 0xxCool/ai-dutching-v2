@@ -1,0 +1,157 @@
+# ============================================================
+# AI-DUTCHING ML SYSTEM - COLAB-OPTIMIZED REQUIREMENTS
+# ============================================================
+# Optimiert für Google Colab - KEINE festen Versionen für
+# Pakete die Colab schon hat!
+# ============================================================
+
+# =========================
+# CORE ML & DEEP LEARNING
+# =========================
+# PyTorch, XGBoost, LightGBM werden separat installiert!
+
+# =========================
+# DATA SCIENCE ESSENTIALS
+# =========================
+# NICHT installieren - Colab hat diese schon:
+# numpy, pandas, scipy, scikit-learn, statsmodels
+
+# =========================
+# FEATURE ENGINEERING
+# =========================
+imbalanced-learn
+category_encoders
+feature-engine
+
+# =========================
+# MODEL OPTIMIZATION
+# =========================
+optuna
+hyperopt
+scikit-optimize
+
+# =========================
+# VISUALIZATION
+# =========================
+# matplotlib, seaborn sind in Colab - NICHT neu installieren
+plotly
+tensorboard
+wandb
+
+# =========================
+# MLOPS & TRACKING
+# =========================
+mlflow
+sacred
+neptune-client
+dagshub
+
+# =========================
+# WEB & API
+# =========================
+fastapi
+uvicorn
+streamlit
+streamlit-autorefresh
+streamlit-shadcn-ui
+gradio
+flask
+django
+
+# =========================
+# DATABASE
+# =========================
+psycopg2-binary
+sqlalchemy
+pymongo
+redis
+elasticsearch
+
+# =========================
+# WEB SCRAPING
+# =========================
+# requests, beautifulsoup4 sind in Colab
+aiohttp
+selenium
+scrapy
+playwright
+
+# =========================
+# DATA FORMATS
+# =========================
+# pyyaml ist in Colab
+toml
+python-dotenv
+openpyxl
+
+# =========================
+# UTILITIES
+# =========================
+# tqdm ist in Colab
+rich
+colorama
+loguru
+click
+typer
+
+# =========================
+# GPU MONITORING (Colab-spezifisch)
+# =========================
+# pynvml ist in Colab - Version 11.5.3
+nvidia-ml-py
+gpustat
+py3nvml
+
+# =========================
+# JUPYTER & NOTEBOOKS
+# =========================
+# jupyter, jupyterlab, ipykernel sind in Colab - NICHT neu installieren
+
+# =========================
+# TESTING
+# =========================
+pytest
+pytest-cov
+pytest-asyncio
+hypothesis
+
+# =========================
+# CODE QUALITY
+# =========================
+black
+flake8
+pylint
+mypy
+isort
+autopep8
+
+# =========================
+# PROFILING
+# =========================
+memory-profiler
+line-profiler
+py-spy
+
+# =========================
+# PARALLEL PROCESSING
+# =========================
+# joblib, dask sind in Colab
+ray[tune]
+
+# =========================
+# TIME SERIES
+# =========================
+prophet
+pmdarima
+tslearn
+sktime
+
+# =========================
+# STREAMLIT EXTRAS
+# =========================
+st-annotated-text
+streamlit-camera-input-live
+streamlit-image-coordinates
+streamlit-toggle-switch
+streamlit-extras
+validators
