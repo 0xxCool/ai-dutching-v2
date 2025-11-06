@@ -8,6 +8,7 @@ Features:
 - GPU Support für alle kompatiblen Modelle
 - Automatic Model Registry
 - Early Stopping & Cross-Validation
+- ✅ KOMPATIBEL MIT V4 FIXED SCRAPER!
 """
 
 import pandas as pd
@@ -106,7 +107,7 @@ class ImprovedNeuralNetwork(nn.Module):
 # =============================================================================
 
 def load_and_preprocess_data(config: Config) -> Tuple:
-    """Lädt und bereitet Daten vor"""
+    """Lädt und bereitet Daten vor - ✅ KOMPATIBEL MIT V4 FIXED!"""
     
     print("📂 LADE DATEN...")
     print("="*70)
@@ -114,6 +115,27 @@ def load_and_preprocess_data(config: Config) -> Tuple:
     df = pd.read_csv(config.DATABASE_PATH)
     
     print(f"✅ Geladen: {len(df)} Spiele")
+    
+    # ✅ NEUE SPALTEN-NORMALISIERUNG FÜR V4 FIXED!
+    # Konvertiere neue Spalten-Namen zu alten (für Kompatibilität)
+    if 'home_team' in df.columns and 'HomeTeam' not in df.columns:
+        print("   📝 Erkenne V4 FIXED Format - konvertiere Spalten...")
+        df['HomeTeam'] = df['home_team']
+        df['AwayTeam'] = df['away_team']
+        df['FTHG'] = df['home_score']
+        df['FTAG'] = df['away_score']
+        
+        # FTR aus Score berechnen
+        def calculate_ftr(row):
+            if row['home_score'] > row['away_score']:
+                return 'H'
+            elif row['home_score'] < row['away_score']:
+                return 'A'
+            else:
+                return 'D'
+        
+        df['FTR'] = df.apply(calculate_ftr, axis=1)
+        print("   ✅ Spalten konvertiert")
     
     # Datum konvertieren
     df['date'] = pd.to_datetime(df['date'])
@@ -236,8 +258,8 @@ def create_features(df: pd.DataFrame) -> Tuple:
             min(away_goals_against) if away_goals_against else 0,
             len(home_matches),
             len(away_matches),
-            1 if len(home_matches) >= 5 else 0,  # confidence flag
-            1 if len(away_matches) >= 5 else 0   # confidence flag
+            1 if len(home_matches) >= 5 else 0,
+            1 if len(away_matches) >= 5 else 0
         ]
         
         # Label (0=Home, 1=Draw, 2=Away)
@@ -255,62 +277,50 @@ def create_features(df: pd.DataFrame) -> Tuple:
     y = np.array(labels_list)
     
     print(f"\n✅ Features erstellt:")
-    print(f"   Samples: {len(X)}")
+    print(f"   Shape: {X.shape}")
     print(f"   Features: {X.shape[1]}")
-    print(f"   Klassen: {len(np.unique(y))}")
-    
-    # Klassenverteilung
-    unique, counts = np.unique(y, return_counts=True)
-    print(f"\n   Klassenverteilung:")
-    class_names = ['Home Win', 'Draw', 'Away Win']
-    for cls, count in zip(unique, counts):
-        print(f"     {class_names[cls]}: {count} ({count/len(y)*100:.1f}%)")
+    print(f"   Samples: {X.shape[0]}")
     
     return X, y
 
 # =============================================================================
-# MODEL TRAINING
+# TRAINING FUNCTIONS
 # =============================================================================
 
-def train_neural_network(X_train, y_train, X_val, y_val, config: Config) -> Tuple:
+def train_neural_network(X_train, y_train, X_val, y_val, config: Config):
     """Trainiert Neural Network"""
     
     print("\n🧠 TRAINIERE NEURAL NETWORK...")
     print("="*70)
     
-    device = torch.device('cuda' if config.USE_GPU and torch.cuda.is_available() else 'cpu')
-    print(f"   Device: {device}")
+    device = torch.device('cuda' if torch.cuda.is_available() and config.USE_GPU else 'cpu')
+    print(f"Device: {device}")
     
-    # Convert to tensors
+    input_size = X_train.shape[1]
+    output_size = 3
+    
+    model = ImprovedNeuralNetwork(
+        input_size, config.NN_HIDDEN_SIZES, output_size, config.NN_DROPOUT
+    ).to(device)
+    
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=config.NN_LR)
+    
     X_train_t = torch.FloatTensor(X_train).to(device)
     y_train_t = torch.LongTensor(y_train).to(device)
     X_val_t = torch.FloatTensor(X_val).to(device)
     y_val_t = torch.LongTensor(y_val).to(device)
     
-    # Create DataLoader
     train_dataset = TensorDataset(X_train_t, y_train_t)
     train_loader = DataLoader(train_dataset, batch_size=config.NN_BATCH_SIZE, shuffle=True)
     
-    # Model
-    model = ImprovedNeuralNetwork(
-        input_size=X_train.shape[1],
-        hidden_sizes=config.NN_HIDDEN_SIZES,
-        output_size=3,
-        dropout=config.NN_DROPOUT
-    ).to(device)
-    
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=config.NN_LR)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
-    
     best_val_loss = float('inf')
-    best_model_state = None
     patience_counter = 0
     
     for epoch in range(config.NN_EPOCHS):
-        # Training
         model.train()
-        train_loss = 0
+        train_loss = 0.0
+        
         for batch_X, batch_y in train_loader:
             optimizer.zero_grad()
             outputs = model(batch_X)
@@ -319,44 +329,26 @@ def train_neural_network(X_train, y_train, X_val, y_val, config: Config) -> Tupl
             optimizer.step()
             train_loss += loss.item()
         
-        train_loss /= len(train_loader)
-        
-        # Validation
         model.eval()
         with torch.no_grad():
             val_outputs = model(X_val_t)
             val_loss = criterion(val_outputs, y_val_t).item()
-            val_preds = torch.argmax(val_outputs, dim=1)
-            val_acc = (val_preds == y_val_t).float().mean().item()
-        
-        scheduler.step(val_loss)
         
         if (epoch + 1) % 10 == 0:
-            print(f"Epoch {epoch+1:3d}/{config.NN_EPOCHS} | "
-                  f"Train Loss: {train_loss:.4f} | "
-                  f"Val Loss: {val_loss:.4f} | "
-                  f"Val Acc: {val_acc:.4f}")
+            print(f"Epoch {epoch+1}/{config.NN_EPOCHS} - Train Loss: {train_loss/len(train_loader):.4f} - Val Loss: {val_loss:.4f}")
         
-        # Early stopping
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_model_state = model.state_dict().copy()
             patience_counter = 0
         else:
             patience_counter += 1
             if patience_counter >= config.NN_PATIENCE:
-                print(f"\n⏹️  Early Stopping at Epoch {epoch+1}")
+                print(f"Early stopping at epoch {epoch+1}")
                 break
     
-    # Load best model
-    model.load_state_dict(best_model_state)
-    
     print(f"\n✅ Neural Network Training abgeschlossen!")
-    print(f"   Best Val Loss: {best_val_loss:.4f}")
-    print(f"   Best Val Accuracy: {val_acc:.4f}")
     
     return model, device
-
 
 def train_xgboost(X_train, y_train, X_val, y_val, config: Config):
     """Trainiert XGBoost"""
@@ -364,40 +356,33 @@ def train_xgboost(X_train, y_train, X_val, y_val, config: Config):
     print("\n🌲 TRAINIERE XGBOOST...")
     print("="*70)
     
-    # Try GPU first
-    try:
-        params = {
-            'objective': 'multi:softmax',
-            'num_class': 3,
-            'tree_method': 'gpu_hist' if config.USE_GPU else 'hist',
-            'max_depth': config.XGB_MAX_DEPTH,
-            'learning_rate': config.XGB_LEARNING_RATE,
-            'n_estimators': config.XGB_N_ESTIMATORS,
-            'eval_metric': 'mlogloss'
-        }
-        
-        model = xgb.XGBClassifier(**params)
-        
-        model.fit(
-            X_train, y_train,
-            eval_set=[(X_train, y_train), (X_val, y_val)],
-            verbose=10
-        )
-        
-        print(f"\n✅ XGBoost Training abgeschlossen! (GPU: {config.USE_GPU})")
-        
-    except Exception as e:
-        print(f"⚠️  GPU Training fehlgeschlagen: {e}")
-        print("   Fallback auf CPU...")
-        
-        params['tree_method'] = 'hist'
-        model = xgb.XGBClassifier(**params)
-        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=10)
-        
-        print(f"\n✅ XGBoost Training abgeschlossen! (CPU)")
+    params = {
+        'objective': 'multi:softmax',
+        'num_class': 3,
+        'max_depth': config.XGB_MAX_DEPTH,
+        'learning_rate': config.XGB_LEARNING_RATE,
+        'tree_method': 'gpu_hist' if config.USE_GPU else 'hist',
+        'predictor': 'gpu_predictor' if config.USE_GPU else 'cpu_predictor',
+        'eval_metric': 'mlogloss'
+    }
+    
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dval = xgb.DMatrix(X_val, label=y_val)
+    
+    evals = [(dtrain, 'train'), (dval, 'val')]
+    
+    model = xgb.train(
+        params,
+        dtrain,
+        num_boost_round=config.XGB_N_ESTIMATORS,
+        evals=evals,
+        early_stopping_rounds=config.XGB_EARLY_STOPPING,
+        verbose_eval=20
+    )
+    
+    print(f"\n✅ XGBoost Training abgeschlossen!")
     
     return model
-
 
 def train_random_forest(X_train, y_train, config: Config):
     """Trainiert Random Forest"""
@@ -419,7 +404,6 @@ def train_random_forest(X_train, y_train, config: Config):
     print(f"\n✅ Random Forest Training abgeschlossen!")
     
     return model
-
 
 def train_lightgbm(X_train, y_train, X_val, y_val, config: Config):
     """Trainiert LightGBM"""
@@ -471,11 +455,17 @@ def evaluate_model(model, X_test, y_test, model_name: str, device=None):
             outputs = model(X_test_t)
             predictions = torch.argmax(outputs, dim=1).cpu().numpy()
     
+    elif model_name == "XGBoost":
+        # XGBoost braucht DMatrix!
+        dtest = xgb.DMatrix(X_test)
+        predictions = model.predict(dtest)
+    
     elif model_name == "LightGBM":
         predictions = model.predict(X_test)
         predictions = np.argmax(predictions, axis=1)
     
     else:
+        # Random Forest
         predictions = model.predict(X_test)
     
     accuracy = accuracy_score(y_test, predictions)
@@ -498,13 +488,11 @@ def save_models(models: Dict, scaler, config: Config):
     print("\n💾 SPEICHERE MODELLE...")
     print("="*70)
     
-    # Erstelle Ordner
     os.makedirs(config.MODELS_DIR, exist_ok=True)
     os.makedirs(os.path.dirname(config.REGISTRY_FILE), exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Load or create registry
     if os.path.exists(config.REGISTRY_FILE):
         with open(config.REGISTRY_FILE, 'r') as f:
             registry = json.load(f)
@@ -513,15 +501,12 @@ def save_models(models: Dict, scaler, config: Config):
     
     saved_models = {}
     
-    # Save each model
     for model_type, (model, accuracy, device) in models.items():
         
         model_id = f"{model_type.lower().replace(' ', '_')}_{timestamp}"
         model_path = os.path.join(config.MODELS_DIR, f"{model_id}.pkl")
         
-        # Save model
         if model_type == "Neural Network":
-            # Save PyTorch model
             torch.save({
                 'model_state_dict': model.state_dict(),
                 'model_config': {
@@ -535,13 +520,11 @@ def save_models(models: Dict, scaler, config: Config):
             saved_models[model_type] = model_path.replace('.pkl', '.pth')
         
         else:
-            # Save sklearn/xgb/lgb model
             with open(model_path, 'wb') as f:
                 pickle.dump(model, f)
             
             saved_models[model_type] = model_path
         
-        # Add to registry
         registry['models'].append({
             'id': model_id,
             'type': model_type,
@@ -555,14 +538,12 @@ def save_models(models: Dict, scaler, config: Config):
         print(f"   Accuracy: {accuracy:.4f}")
         print(f"   Path: {saved_models[model_type]}\n")
     
-    # Save scaler
     scaler_path = os.path.join(config.MODELS_DIR, f"scaler_{timestamp}.pkl")
     with open(scaler_path, 'wb') as f:
         pickle.dump(scaler, f)
     
     registry['scaler'] = scaler_path
     
-    # Save registry
     with open(config.REGISTRY_FILE, 'w') as f:
         json.dump(registry, f, indent=2)
     
@@ -576,19 +557,16 @@ def main():
     """Haupttraining-Pipeline"""
     
     print("="*70)
-    print("🚀 ML TRAINING PIPELINE V2")
+    print("🚀 ML TRAINING PIPELINE V2 - KOMPATIBEL MIT V4 FIXED")
     print("="*70)
     print()
     
     config = Config()
     
-    # 1. Load Data
     df = load_and_preprocess_data(config)
     
-    # 2. Create Features
     X, y = create_features(df)
     
-    # 3. Split Data
     print("\n✂️  SPLIT DATEN...")
     print("="*70)
     
@@ -606,7 +584,6 @@ def main():
     print(f"   Validation: {len(X_val)} Samples ({len(X_val)/len(X)*100:.1f}%)")
     print(f"   Test:       {len(X_test)} Samples ({len(X_test)/len(X)*100:.1f}%)")
     
-    # 4. Scale Features
     print("\n🔄 Normalisiere Features...")
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -614,33 +591,26 @@ def main():
     X_test = scaler.transform(X_test)
     print("✅ Normalisierung abgeschlossen")
     
-    # 5. Train All Models
     models = {}
     
-    # Neural Network
     nn_model, device = train_neural_network(X_train, y_train, X_val, y_val, config)
     nn_acc = evaluate_model(nn_model, X_test, y_test, "Neural Network", device)
     models["Neural Network"] = (nn_model, nn_acc, device)
     
-    # XGBoost
     xgb_model = train_xgboost(X_train, y_train, X_val, y_val, config)
     xgb_acc = evaluate_model(xgb_model, X_test, y_test, "XGBoost")
     models["XGBoost"] = (xgb_model, xgb_acc, None)
     
-    # Random Forest
     rf_model = train_random_forest(X_train, y_train, config)
     rf_acc = evaluate_model(rf_model, X_test, y_test, "Random Forest")
     models["Random Forest"] = (rf_model, rf_acc, None)
     
-    # LightGBM
     lgb_model = train_lightgbm(X_train, y_train, X_val, y_val, config)
     lgb_acc = evaluate_model(lgb_model, X_test, y_test, "LightGBM")
     models["LightGBM"] = (lgb_model, lgb_acc, None)
     
-    # 6. Save Models
     save_models(models, scaler, config)
     
-    # 7. Summary
     print("\n" + "="*70)
     print("✅ TRAINING ABGESCHLOSSEN!")
     print("="*70)
