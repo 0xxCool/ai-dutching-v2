@@ -27,7 +27,7 @@ pip install lightgbm --config-settings=cmake.define.USE_GPU=ON
 
 echo "➡️ Schritt 4: Installiere alle verbleibenden Pakete..."
 # Installiert alle anderen Pakete aus der bereinigten Datei
-pip install -r requirements.txt
+pip install -r requirements_colab_optimized.txt
 
 echo "✅✅✅ Installation abgeschlossen! ✅✅✅"
 echo "Führe jetzt deine Verifizierung durch:"
